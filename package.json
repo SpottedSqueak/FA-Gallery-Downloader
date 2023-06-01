@@ -1,11 +1,11 @@
 {
-  "name": "fa-gallery-download",
+  "name": "fa-gallery-downloader",
   "version": "0.0.1",
-  "description": "Downloader for stepping through and pulling in all the files from an FA gallery.",
+  "description": "Dead simple gallery download for FurAffinity",
   "main": "index.js",
   "type": "module",
   "author": "SpottedSqueak@gmail.com",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "browser-paths": "^1.1.0",
     "cheerio": "^1.0.0-rc.12",
