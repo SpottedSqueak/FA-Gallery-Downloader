@@ -50,7 +50,7 @@ async function logInUser() {
   }
 }
 
-export async function loginLogic(newPage) {
+export async function handleLogin(newPage) {
   page = newPage;
   // Get credentials
   if (!await checkIfLoggedIn()) await logInUser();

@@ -1,8 +1,9 @@
 import * as db from './js/database-interface.js';
-import { init as initUtil, log } from './js/utils.js';
+import { init as initUtils, log } from './js/utils.js';
 import { FA_URL_BASE } from './js/constants.js';
-import { loginLogic, username } from './js/login.js';
+import { handleLogin, username } from './js/login.js';
 import { getLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
+import { initDownloads } from './js/download-content.js';
 import { getChromePath, getChromiumPath, getFirefoxPath } from 'browser-paths';
 import puppeteer from 'puppeteer-core';
 import fs from 'fs-extra';
@@ -11,8 +12,6 @@ import fs from 'fs-extra';
 const chromePath = await getChromiumPath() || await getChromePath();
 const firefoxPath = await getFirefoxPath();
 const product = (!chromePath) ? 'firefox':'chrome';
-
-let page = null;
 
 async function setupBrowser() {
   const opts = {
@@ -25,37 +24,36 @@ async function setupBrowser() {
   };
   fs.ensureDirSync('./myUserDataDir/' + product);
   const browser = await puppeteer.launch(opts);
-  page = await browser.pages();
+  let page = await browser.pages();
   page = page[0];
   // Close everything when main page is closed
   page.on('close', () => {
     process.exit(1);
   });
+  return page;
 }
 
 // Init database
 await db.init();
 
-await setupBrowser();
+const page = await setupBrowser();
 // Setup user logging
-initUtil(page);
-await loginLogic(page);
+initUtils(page);
+await handleLogin(page);
 
+// Need to handle login before getting username
 const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${username}/`;
 const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${username}/`;
 
+// Scrape data from gallery pages
 log('Gathering submission links from gallery pages...');
-//let galleryLinks = await getLinks(bgPage, FA_GALLERY_URL);
-//log(`${galleryLinks.length} Links found!`);
-//await db.saveLinks(galleryLinks, false);
-
+await getLinks(FA_GALLERY_URL, false);
 log('Gathering submission links from scrap pages...');
 await getLinks(FA_SCRAPS_URL, true);
-
-
-// Loop through links
-await scrapeSubmissionInfo(false);
-await scrapeSubmissionInfo(true);
-
-console.log(await db.getAllData());
-  // Queue up content download
+// Scrape data from collected submission pages
+Promise.all([
+  scrapeSubmissionInfo(),
+  initDownloads(),
+]).then(() => {
+  log('Everything downloaded from your gallery! ♥');
+});

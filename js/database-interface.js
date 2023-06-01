@@ -1,6 +1,8 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import fs from 'fs-extra';
 
+const dbLocation = './databases/fa-gallery-downloader.db';
 let db = null;
 /**
  * Marks the given content_url as saved (downloaded).
@@ -21,7 +23,7 @@ export function contentSaved(content_url) {
  */
 export function getNextUnsavedContent() {
   return db.get(`
-  SELECT content_url
+  SELECT content_url, content_name
   FROM subdata
   WHERE is_content_saved = 0
   `);
@@ -59,11 +61,11 @@ export function saveMetaData(url, d) {
  * @param {Boolean} isScraps 
  * @returns Promise that resolves to all matching Database rows
  */
-export function getSubmissionLinks(isScraps = false) {
+export function getSubmissionLinks() {
   return db.all(`
   SELECT url
   FROM subdata
-  WHERE id IS null and is_scrap = ${isScraps}
+  WHERE id IS null
   `);
 }
 /**
@@ -101,9 +103,10 @@ export function getAllData() {
  * @returns 
  */
 export async function init() {
+  fs.ensureFileSync(dbLocation);
   sqlite3.verbose();
   db = await open({
-    filename: ':memory:', //'../databases/fa-gallery-download.db',
+    filename: dbLocation,
     driver: sqlite3.cached.Database,
   });
   console.log('Load Complete!');

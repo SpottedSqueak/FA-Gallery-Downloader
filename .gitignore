@@ -2,3 +2,5 @@ myUserDataDir
 node_modules
 databases
 .vscode
+downloaded_content
+.db

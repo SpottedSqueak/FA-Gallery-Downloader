@@ -15,9 +15,10 @@ export async function waitFor(t = 1000) {
  * Overwrites the previous log message with a new one
  * @param {String} text 
  */
-export async function logLast(text) {
+export async function logLast(text, id) {
+  const divClass = id ? `.${id}`: 'p:last-child';
   if (!page?.isClosed()) {
-    page.evaluate(`document.querySelector('#status p:last-child').innerHTML = '${text}'`);
+    page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${text}'`);
   }
   console.log(text);
 }
@@ -25,9 +26,9 @@ export async function logLast(text) {
  * Logs a message to the user.
  * @param {String} text 
  */
-export async function log(text) {
+export async function log(text, id) {
   if (!page?.isClosed()) {
-    page.evaluate(`document.querySelector('#status').innerHTML += '<p>${text}</p>'`);
+    page.evaluate(`document.querySelector('#status').innerHTML += '<p class="${id}">${text}</p>'`);
   }
   console.log(text);
 }
