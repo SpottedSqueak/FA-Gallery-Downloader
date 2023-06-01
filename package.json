@@ -1,11 +1,16 @@
 {
   "name": "fa-gallery-downloader",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Dead simple gallery download for FurAffinity",
   "main": "index.js",
   "type": "module",
   "author": "SpottedSqueak@gmail.com",
   "license": "MIT",
+  "scripts": {
+    "start": "node index.js",
+    "lint": "eslint js --ext .js",
+    "lint:init": "eslint --init"
+  },
   "dependencies": {
     "browser-paths": "^1.1.0",
     "cheerio": "^1.0.0-rc.12",
@@ -15,5 +20,8 @@
     "puppeteer-core": "^20.4.0",
     "sqlite": "^4.2.1",
     "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "eslint": "^8.41.0"
   }
 }

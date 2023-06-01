@@ -1,3 +1,4 @@
 myUserDataDir
 node_modules
 databases
+.vscode
