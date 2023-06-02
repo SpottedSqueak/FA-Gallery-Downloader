@@ -9,6 +9,7 @@ export default
   <title>Current FA Download progress</title>
 </head>
 <body>
+  <h2>FA Gallery Downloader</h2>
   <div id="status">
     <p>Checking logged in status...</p>
   </div>

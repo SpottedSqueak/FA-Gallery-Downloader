@@ -51,7 +51,7 @@ export async function scrapeSubmissionInfo() {
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],
       title: $('.submission-title').text().trim(),
-      desc: $('.submission-description').text().trim(),
+      desc: $('.submission-description').html().trim(),
       tags: $('.tags-row').text().match(/([A-Z])\w+/gmi)?.join(','),
       content_name: $('.download > a').attr('href').split('/').pop(),
       content_url: $('.download > a').attr('href'),
