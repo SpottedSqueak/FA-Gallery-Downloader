@@ -47,7 +47,6 @@ export async function scrapeSubmissionInfo() {
   let index = 0;
   while (index < links.length) {
     logLast(`Saving metadata for: ${index+1}/${links.length} pages...`, metadataID);
-    //await navigate(bgPage, links[index].url);
     let $ = await getHTML(links[index].url);
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],

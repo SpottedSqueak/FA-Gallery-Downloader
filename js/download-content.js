@@ -5,7 +5,7 @@ import fs from 'fs-extra';
 import got from 'got';
 
 const id = 'download-status';
-const downloadDir = './downloaded_content';
+const downloadDir = './fa_gallery_downloader/downloaded_content';
 
 /**
  * Handles the actual download and progress update for file saving.

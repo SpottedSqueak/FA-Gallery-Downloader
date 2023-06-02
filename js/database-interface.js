@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import fs from 'fs-extra';
 
-const dbLocation = './databases/fa-gallery-downloader.db';
+const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
 /**
  * Marks the given content_url as saved (downloaded).

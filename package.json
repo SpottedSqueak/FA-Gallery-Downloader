@@ -13,7 +13,7 @@
     "lint:init": "eslint --init",
     "build:windows": "caxa -i . -o \"./build/fa-gallery-downloader.exe\" -e \".vscode\" \"browser_profiles\" \"build\" \"databases\" \"downloaded_content\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
     "build:mac": "caxa -i . -o \"./build/fa-gallery-downloader.app\" -e \".vscode\" \"browser_profiles\" \"build\" \"databases\" \"downloaded_content\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader\" -e \".vscode\" \"browser_profiles\" \"build\" \"databases\" \"downloaded_content\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
+    "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader.sh\" -e \".vscode\" \"browser_profiles\" \"build\" \"databases\" \"downloaded_content\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
   },
   "dependencies": {
     "browser-paths": "^1.1.0",

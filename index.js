@@ -16,6 +16,7 @@ async function getBrowserPath() {
   return { chromePath, firefoxPath, product };
 }
 
+const BROWSER_DIR = './fa_gallery_downloader/browser_profiles/';
 async function setupBrowser() {
   const { chromePath, firefoxPath, product } = await getBrowserPath();
   const opts = {
@@ -23,10 +24,10 @@ async function setupBrowser() {
     executablePath: chromePath || firefoxPath,
     product,
     args: (product === 'firefox') ? ['--profile-directory="Profile 1"', '--window-size=1024,700', '-no-remote'] : ['--app=data:text/html, Loading...', '--window-size=1024,700'],
-    userDataDir: './browser_profiles/' + product,
+    userDataDir: BROWSER_DIR + product,
     defaultViewport: null,
   };
-  fs.ensureDirSync('./browser_profiles/' + product);
+  fs.ensureDirSync(BROWSER_DIR + product);
   const browser = await puppeteer.launch(opts);
   let page = await browser.pages();
   page = page[0];
