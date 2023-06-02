@@ -10,7 +10,7 @@ import fs from 'fs-extra';
 
 // Find a browser to use!
 async function getBrowserPath() {
-  const chromePath = ''; //await getChromiumPath() || await getChromePath();
+  const chromePath = await getChromiumPath() || await getChromePath();
   const firefoxPath = (chromePath) ? '' : await getFirefoxPath();
   const product = (!chromePath) ? 'firefox':'chrome';
   return { chromePath, firefoxPath, product };
@@ -64,9 +64,5 @@ async function init() {
     log('Everything downloaded from your gallery! ♥');
   });
 }
-
-process.on('uncaughtException', () => {
-
-});
 
 init();
