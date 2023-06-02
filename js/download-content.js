@@ -1,4 +1,4 @@
-import { waitFor, log, logLast } from './utils.js';
+import { waitFor, log, logLast, logProgress } from './utils.js';
 import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
 import fs from 'fs-extra';
@@ -20,8 +20,7 @@ function downloadSetup({ content_url, content_name }) {
     const flStream = fs.createWriteStream(`${downloadDir}/${content_name}`);
     dl.on("downloadProgress", ({ transferred, total, percent }) => {
       const percentage = Math.round(percent * 100);
-      logLast(`<progress value="${transferred}" max="${total}"></progress> ${percentage}%`, id);
-      // logLast(`progress: ${transferred}/${total} (${percentage}%)`, id);
+      logProgress({ transferred, total, percentage }, id);
     })
     .on("error", (error) => {
       console.error(`Download failed: ${error.message}`);
@@ -47,7 +46,7 @@ function downloadSetup({ content_url, content_name }) {
 async function startNextDownload() {
   const contentInfo = await db.getNextUnsavedContent();
   if (!contentInfo) return;
-  console.log(contentInfo);
+  // console.log(contentInfo);
   await downloadSetup(contentInfo)
     .then(() => db.contentSaved(contentInfo.content_url));
   await waitFor(2000);

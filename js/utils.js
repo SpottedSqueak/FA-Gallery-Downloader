@@ -11,6 +11,14 @@ let page = null;
 export async function waitFor(t = 1000) {
   return new Promise(r => setTimeout(r, t));
 }
+export async function logProgress(data, id) {
+  const { transferred, total, percentage } = data;
+  const divClass = id ? `.${id}`: 'p:last-child';
+  if (!page?.isClosed()) {
+    const html = `<progress value="${transferred}" max="${total}"></progress> ${percentage}%`;
+    page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${html}'`);
+  }
+}
 /**
  * Overwrites the previous log message with a new one
  * @param {String} text 
@@ -37,9 +45,11 @@ export async function log(text, id) {
  * @param {String} url 
  * @returns Loaded Cheerio Object
  */
-export async function getHTML(url) {
-  const html = await got(url, faRequestHeaders).text();
-  return cheerio.load(html);
+export function getHTML(url) {
+  return got(url, faRequestHeaders).text().then((result) => {
+    console.log(`Loaded: ${url}`);
+    return cheerio.load(result);
+  }).catch((e) => console.log(e));
 }
 /**
  * Binds the given Page object for future log messages.

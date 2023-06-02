@@ -1,6 +1,6 @@
 import { FA_URL_BASE, FA_LOGIN } from "./constants.js";
 import { log, getHTML } from "./utils.js";
-import fs from 'fs-extra';
+import { default as htmlDoc } from './html.js';
 
 export let faRequestHeaders = null;
 export let username = '';
@@ -44,18 +44,17 @@ async function checkIfLoggedIn() {
 async function logInUser() {
   console.log('Not logged in! Requesting user to do so...');
   await page.goto(FA_LOGIN);
-  await page.waitForNavigation();
   while (/login/i.test(await page.url())) {
     await page.waitForNavigation();
   }
+  await checkIfLoggedIn();
 }
 
 export async function handleLogin(newPage) {
   page = newPage;
   // Get credentials
   if (!await checkIfLoggedIn()) await logInUser();
-  const pageData = fs.readFileSync('index.html', 'utf8')
-  await page.setContent(pageData);
+  await page.setContent(htmlDoc);
   page = null;
-  log('User logged in!');
+  log(`User logged-in as: ${username}`);
 }

@@ -1,6 +1,8 @@
-myUserDataDir
+browser_profiles
 node_modules
 databases
 .vscode
 downloaded_content
-.db
+*.db
+packages
+build
