@@ -11,15 +11,16 @@
     "start": "node index.js",
     "lint": "eslint js --ext .js",
     "lint:init": "eslint --init",
-    "build:windows": "caxa -i . -o \"./build/fa-gallery-downloader.exe\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:mac": "caxa -i . -o \"./build/fa-gallery-downloader.app\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader.sh\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
+    "build:windows": "caxa -i . -o \"./build/fa-gallery-downloader.exe\" -m \"Unpackaging, please wait...\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
+    "build:mac": "caxa -i . -o \"./build/fa-gallery-downloader.app\" -m \"Unpackaging, please wait...\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
+    "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader.sh\" -m \"Unpackaging, please wait...\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
   },
   "dependencies": {
     "browser-paths": "^1.1.0",
     "cheerio": "^1.0.0-rc.12",
     "fs-extra": "^11.1.1",
     "got": "^13.0.0",
+    "node-hide-console-window": "^2.1.1",
     "puppeteer-core": "^20.4.0",
     "sqlite": "^4.2.1",
     "sqlite3": "^5.1.6"

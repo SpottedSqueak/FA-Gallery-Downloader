@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 
 const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
+
 /**
  * Marks the given content_url as saved (downloaded).
  * @param {String} content_url 
@@ -28,6 +29,14 @@ export function getNextUnsavedContent() {
   WHERE is_content_saved = 0
   `);
 }
+
+export function needsUsernames() {
+  return db.all(`
+  SELECT url
+  FROM subdata
+  WHERE username IS NULL
+  `);
+}
 /**
  * Takes the given data for the given url and updates the appropriate database columns.
  * @param {String} url 
@@ -43,6 +52,7 @@ export function saveMetaData(url, d) {
     d.content_name,
     d.content_url,
     d.date_uploaded,
+    d.username,
   ];
   return db.run(`
   UPDATE subdata
@@ -53,7 +63,8 @@ export function saveMetaData(url, d) {
     tags = ?,
     content_name = ?,
     content_url =?,
-    date_uploaded = ?
+    date_uploaded = ?,
+    username = ?
   WHERE url = '${url}'`, ...data);
 }
 /**
@@ -98,6 +109,27 @@ export function saveLinks(links, isScrap = false) {
 export function getAllData() {
   return db.all('SELECT * from subdata WHERE id IS NOT null');
 }
+
+export async function upgradeDatabase() {
+  const { user_version } = await db.get('PRAGMA user_version');
+  let version = user_version;
+  let error = null;
+  switch(user_version) {
+    case 0:
+    case 1:
+      await db.exec('ALTER TABLE subdata ADD COLUMN username TEXT')
+        .catch(e => {
+          console.log(e);
+          error = true;
+        });
+      version = 2;
+    default:
+      if(error) return error;
+      await db.exec(`PRAGMA user_version = ${version}`);
+      console.log(`Database now at: v${version}`);
+  }
+}
+
 /**
  * Creates appropriate database tables.
  * @returns 
@@ -109,7 +141,8 @@ export async function init() {
     filename: dbLocation,
     driver: sqlite3.cached.Database,
   });
-  console.log('Load Complete!');
+  const hasError = await upgradeDatabase();
+  if(hasError) process.exit(2);
   // Create base table
   return db.exec(`
   CREATE TABLE IF NOT EXISTS subdata (

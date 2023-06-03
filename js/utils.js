@@ -16,7 +16,7 @@ export async function logProgress(data, id) {
   const divClass = id ? `.${id}`: 'p:last-child';
   if (!page?.isClosed()) {
     const html = `<progress value="${transferred}" max="${total}"></progress> ${percentage}%`;
-    page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${html}'`);
+    await page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${html}'`);
   }
 }
 /**
@@ -26,7 +26,7 @@ export async function logProgress(data, id) {
 export async function logLast(text, id) {
   const divClass = id ? `.${id}`: 'p:last-child';
   if (!page?.isClosed()) {
-    page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${text}'`);
+    await page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${text}'`);
   }
   console.log(text);
 }
@@ -36,7 +36,7 @@ export async function logLast(text, id) {
  */
 export async function log(text, id) {
   if (!page?.isClosed()) {
-    page.evaluate(`document.querySelector('#status').innerHTML += '<p class="${id}">${text}</p>'`);
+    await page.evaluate(`document.querySelector('#status').innerHTML += '<p class="${id}">${text}</p>'`);
   }
   console.log(text);
 }

@@ -1,5 +1,3 @@
-export default 
-`
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,9 +8,10 @@ export default
 </head>
 <body>
   <h2>FA Gallery Downloader</h2>
-  <div id="status">
-    <p>Checking logged in status...</p>
+  <div class="user-choices">
+    <button id="start-download" disabled onclick="window.userPath(this.id)">Start/Continue Gallery Download</button>
+    <button id="view-gallery" onclick="window.userPath(this.id)">View Gallery</button>
   </div>
+  <div id="status"></div>
 </body>
 </html>
-`;

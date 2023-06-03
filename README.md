@@ -32,7 +32,8 @@ I plan to work on this more when I have time, but I'm a pretty busy guy! At the 
 
 ## #ToDo
 
-- [ ] Hide console, log errors to file
+- [x] Hide console
+- [ ] Log errors to file
 - [ ] Clean up the interface some (better logging, maybe download animations?)
 - [ ] Export data to JSON/CSV files
 - [ ] Add a locally browsable copy of the given FA gallery

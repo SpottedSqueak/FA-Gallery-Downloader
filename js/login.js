@@ -1,9 +1,9 @@
 import { FA_URL_BASE, FA_LOGIN } from "./constants.js";
-import { log, getHTML } from "./utils.js";
-import { default as htmlDoc } from './html.js';
+import { getHTML, log, logLast } from "./utils.js";
 
 export let faRequestHeaders = null;
 export let username = '';
+let browser = null;
 let page = null;
 
 function setRequestHeaders(faCookies) {
@@ -30,7 +30,9 @@ async function checkIfCookiesExpired() {
 }
 
 async function checkIfLoggedIn() {
-  const cookies = await page.cookies(FA_URL_BASE);
+  let queryPage = await browser.pages();
+  queryPage = queryPage[0];
+  const cookies = await queryPage.cookies(FA_URL_BASE);
   const loggedInCookies = { a: false, b: false };
   cookies.forEach(val => {
     if (/^(a|b)$/i.test(val.name)) loggedInCookies[val.name] = val.value;
@@ -42,7 +44,9 @@ async function checkIfLoggedIn() {
 }
 
 async function logInUser() {
-  console.log('Not logged in! Requesting user to do so...');
+  page = await browser.newPage();
+  page.setDefaultNavigationTimeout(0);
+  logLast('Not logged in! Requesting user to do so...');
   await page.goto(FA_LOGIN);
   while (/login/i.test(await page.url())) {
     await page.waitForNavigation();
@@ -50,11 +54,13 @@ async function logInUser() {
   await checkIfLoggedIn();
 }
 
-export async function handleLogin(newPage) {
-  page = newPage;
+export async function handleLogin(newBrowser) {
+  browser = newBrowser;
   // Get credentials
+  log('Checking logged in status...');
   if (!await checkIfLoggedIn()) await logInUser();
-  await page.setContent(htmlDoc);
+  logLast(`User logged-in as: <i>${username}</i>`);
+  page?.close();
   page = null;
-  log(`User logged-in as: ${username}`);
+  browser = null;
 }

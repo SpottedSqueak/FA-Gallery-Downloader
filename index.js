@@ -1,5 +1,5 @@
 import * as db from './js/database-interface.js';
-import { init as initUtils, log } from './js/utils.js';
+import { init as initUtils, log, logLast } from './js/utils.js';
 import { FA_URL_BASE } from './js/constants.js';
 import { handleLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
@@ -7,8 +7,17 @@ import { initDownloads } from './js/download-content.js';
 import { getChromePath, getChromiumPath, getFirefoxPath } from 'browser-paths';
 import puppeteer from 'puppeteer-core';
 import fs from 'fs-extra';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { hideConsole } from 'node-hide-console-window';
 
-// Find a browser to use!
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const startupHTML = await fs.readFile(join(__dirname, './html/startup.html'), 'utf8');
+
+/**
+ * Find the path to a browser executable to use for Puppeteer
+ * @returns 
+ */
 async function getBrowserPath() {
   const chromePath = await getChromiumPath() || await getChromePath();
   const firefoxPath = (chromePath) ? '' : await getFirefoxPath();
@@ -17,6 +26,10 @@ async function getBrowserPath() {
 }
 
 const BROWSER_DIR = './fa_gallery_downloader/browser_profiles/';
+/**
+ * Sets up the browser for use with Puppeteer
+ * @returns 
+ */
 async function setupBrowser() {
   const { chromePath, firefoxPath, product } = await getBrowserPath();
   const opts = {
@@ -32,23 +45,16 @@ async function setupBrowser() {
   let page = await browser.pages();
   page = page[0];
   page.setDefaultNavigationTimeout(0);
-  // Close everything when main page is closed
+  // Close program when main page is closed
   page.on('close', () => {
     process.exit(1);
   });
-  return page;
+  // Display startup page
+  await page.setContent(startupHTML);
+  return { browser, page };
 }
 
-async function init() {
-  // Init database
-  await db.init();
-
-  const page = await setupBrowser();
-  // Setup user logging
-  initUtils(page);
-  await handleLogin(page);
-
-  // Need to handle login before getting username
+async function downloadPath() {
   const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${username}/`;
   const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${username}/`;
 
@@ -64,6 +70,41 @@ async function init() {
   ]).then(() => {
     log('Everything downloaded from your gallery! ♥');
   });
+}
+
+async function viewGalleryPath() {
+
+}
+
+async function checkDBRepair() {
+  log('Checking database...');
+  const blankUserNames = await db.needsUsernames();
+  if (blankUserNames.length) {
+    logLast('Database in need of repair! Working on that now...');
+    await scrapeSubmissionInfo(blankUserNames);
+    logLast(`Database repaired!`);
+  } else logLast(`Database OK!`);
+}
+
+async function init() {
+  hideConsole();
+  // Init database
+  await db.init();
+  const { page, browser } = await setupBrowser();
+  // Setup user logging
+  initUtils(page);
+  await handleLogin(browser);
+  await checkDBRepair();
+  // Wait for path decision
+  await page.exposeFunction('userPath', (choice) => {
+    if (choice === 'start-download')
+      downloadPath();
+    else if (choice === 'view-gallery')
+      viewGalleryPath();
+  });
+  // Enable user choice buttons
+  await page.evaluate(`document.querySelectorAll('.user-choices > button')
+  .forEach(div => div.disabled=false)`);
 }
 
 init();

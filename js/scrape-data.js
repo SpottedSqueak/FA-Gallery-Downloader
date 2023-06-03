@@ -1,6 +1,7 @@
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
 import { log, logLast, waitFor, getHTML } from './utils.js';
+import { username } from './login.js';
 
 const scrapeID = 'scrape-div';
 /**
@@ -40,8 +41,8 @@ const metadataID = 'scrape-metadata';
  * Gathers all of the relevant metadata from all uncrawled submission pages.
  * @returns 
  */
-export async function scrapeSubmissionInfo() {
-  const links = await db.getSubmissionLinks();
+export async function scrapeSubmissionInfo(data = null) {
+  const links = data || await db.getSubmissionLinks();
   if (!links.length) return;
   log(`Saving metadata for: 0/${links.length}...`, metadataID);
   let index = 0;
@@ -51,6 +52,7 @@ export async function scrapeSubmissionInfo() {
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],
       title: $('.submission-title').text().trim(),
+      username: $('.submission-title + a').text().trim().toLowerCase(),
       desc: $('.submission-description').html().trim(),
       tags: $('.tags-row').text().match(/([A-Z])\w+/gmi)?.join(','),
       content_name: $('.download > a').attr('href').split('/').pop(),
