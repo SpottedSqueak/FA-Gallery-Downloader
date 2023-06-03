@@ -1,18 +1,17 @@
 import * as db from './js/database-interface.js';
-import { init as initUtils, log, logLast } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname } from './js/utils.js';
 import { FA_URL_BASE } from './js/constants.js';
 import { handleLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { initDownloads } from './js/download-content.js';
+import { initGallery } from './js/view-gallery.js';
 import { getChromePath, getChromiumPath, getFirefoxPath } from 'browser-paths';
 import puppeteer from 'puppeteer-core';
 import fs from 'fs-extra';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { hideConsole } from 'node-hide-console-window';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const startupHTML = await fs.readFile(join(__dirname, './html/startup.html'), 'utf8');
+const startupHTML = fs.readFileSync(join(__dirname, './html/startup.html'), 'utf8');
 
 /**
  * Find the path to a browser executable to use for Puppeteer
@@ -72,10 +71,12 @@ async function downloadPath() {
   });
 }
 
-async function viewGalleryPath() {
-
+async function viewGalleryPath(browser) {
+  // Pass off gallery view to that codebase
+  initGallery(browser);
 }
 
+// Test
 async function checkDBRepair() {
   log('Checking database...');
   const blankUserNames = await db.needsUsernames();
@@ -94,14 +95,15 @@ async function init() {
   // Setup user logging
   initUtils(page);
   await handleLogin(browser);
-  await checkDBRepair();
   // Wait for path decision
   await page.exposeFunction('userPath', (choice) => {
     if (choice === 'start-download')
       downloadPath();
     else if (choice === 'view-gallery')
-      viewGalleryPath();
+      viewGalleryPath(browser);
   });
+  // Repair DB if needed
+  await checkDBRepair();
   // Enable user choice buttons
   await page.evaluate(`document.querySelectorAll('.user-choices > button')
   .forEach(div => div.disabled=false)`);

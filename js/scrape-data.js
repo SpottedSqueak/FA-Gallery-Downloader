@@ -1,7 +1,6 @@
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
 import { log, logLast, waitFor, getHTML } from './utils.js';
-import { username } from './login.js';
 
 const scrapeID = 'scrape-div';
 /**

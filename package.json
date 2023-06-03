@@ -1,6 +1,6 @@
 {
   "name": "fa-gallery-downloader",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "Dead simple gallery download for FurAffinity",
   "main": "index.js",
   "type": "module",
@@ -11,9 +11,9 @@
     "start": "node index.js",
     "lint": "eslint js --ext .js",
     "lint:init": "eslint --init",
-    "build:windows": "caxa -i . -o \"./build/fa-gallery-downloader.exe\" -m \"Unpackaging, please wait...\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:mac": "caxa -i . -o \"./build/fa-gallery-downloader.app\" -m \"Unpackaging, please wait...\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader.sh\" -m \"Unpackaging, please wait...\" -e \".vscode\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
+    "build:windows": "caxa -i . -o \"./build/fa-gallery-downloader.exe\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
+    "build:mac": "caxa -i . -o \"./build/fa-gallery-downloader.app\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
+    "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader.sh\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
   },
   "dependencies": {
     "browser-paths": "^1.1.0",

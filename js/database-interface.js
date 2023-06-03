@@ -5,6 +5,22 @@ import fs from 'fs-extra';
 const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
 
+export function getGalleryPage(offset = 0, count = 25) {
+  return db.all(`
+  SELECT *
+  FROM subdata
+  WHERE id IS NOT NULL
+  ORDER BY id DESC
+  LIMIT ${count} OFFSET ${offset}
+  `);
+}
+export function getSubmissionPage(id) {
+  return db.get(`
+  SELECT *
+  FROM subdata
+  WHERE id = ${id}
+  `);
+}
 /**
  * Marks the given content_url as saved (downloaded).
  * @param {String} content_url 
@@ -113,21 +129,20 @@ export function getAllData() {
 export async function upgradeDatabase() {
   const { user_version } = await db.get('PRAGMA user_version');
   let version = user_version;
-  let error = null;
+  let error = false;
   switch(user_version) {
     case 0:
     case 1:
       await db.exec('ALTER TABLE subdata ADD COLUMN username TEXT')
-        .catch(e => {
-          console.log(e);
-          error = true;
+        .catch(() => {
+          // Column already exists, just continue
         });
       version = 2;
-    default:
-      if(error) return error;
-      await db.exec(`PRAGMA user_version = ${version}`);
-      console.log(`Database now at: v${version}`);
   }
+  if(error) return error;
+  await db.exec(`PRAGMA user_version = ${version}`);
+  console.log(`Database now at: v${version}`);
+  return false;
 }
 
 /**
@@ -141,20 +156,32 @@ export async function init() {
     filename: dbLocation,
     driver: sqlite3.cached.Database,
   });
-  const hasError = await upgradeDatabase();
-  if(hasError) process.exit(2);
   // Create base table
-  return db.exec(`
-  CREATE TABLE IF NOT EXISTS subdata (
-    id TEXT UNIQUE ON CONFLICT IGNORE, 
-    title TEXT, 
-    desc TEXT, 
-    tags TEXT, 
-    url TEXT UNIQUE ON CONFLICT IGNORE, 
-    is_scrap INTEGER, 
-    date_uploaded TEXT, 
-    content_url TEXT, 
-    content_name TEXT, 
-    is_content_saved INTEGER
-  )`);
+  return db.get(`
+    SELECT name 
+    FROM sqlite_master 
+    WHERE type='table' AND name='subdata'
+  `).then(({ name } = {}) => {
+    if (!name) {
+      return db.exec(`
+      CREATE TABLE subdata (
+        id TEXT UNIQUE ON CONFLICT IGNORE, 
+        title TEXT, 
+        desc TEXT, 
+        tags TEXT, 
+        url TEXT UNIQUE ON CONFLICT IGNORE, 
+        is_scrap INTEGER, 
+        date_uploaded TEXT, 
+        content_url TEXT, 
+        content_name TEXT, 
+        is_content_saved INTEGER,
+        username TEXT
+      )`)
+      .then(db.exec(`PRAGMA user_version = 2`));
+    }
+  })
+  .then(upgradeDatabase)
+  .then((hasError) => {
+    if(hasError) process.exit(2);
+  });
 }

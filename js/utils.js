@@ -1,6 +1,10 @@
 import { faRequestHeaders } from './login.js';
 import * as cheerio from 'cheerio';
 import got from 'got';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+// Get the folder directory name
+export const __dirname = join(dirname(fileURLToPath(import.meta.url)), '../');
 
 let page = null;
 /**
