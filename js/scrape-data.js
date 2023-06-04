@@ -1,6 +1,7 @@
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
 import { log, logLast, waitFor, getHTML } from './utils.js';
+import process from 'node:process';
 
 const scrapeID = 'scrape-div';
 /**
@@ -15,6 +16,7 @@ export async function getSubmissionLinks(url, isScraps = false) {
   let stopLoop = false;
   log('Starting up metadata scraper...', divID);
   while(!stopLoop) {
+    if (process.exitCode) return;
     logLast(`Querying Page ${currPageCount}/??...`, divID);
     let $ = await getHTML(url + currPageCount);
     let newLinks = Array.from($('#gallery-gallery u > a'))
@@ -57,12 +59,13 @@ const metadataID = 'scrape-metadata';
  * Gathers all of the relevant metadata from all uncrawled submission pages.
  * @returns 
  */
-export async function scrapeSubmissionInfo(data = null, scrapeComments) {
+export async function scrapeSubmissionInfo(data = null, downloadComments) {
   const links = data || await db.getSubmissionLinks();
   if (!links.length) return;
   log(`Saving metadata...`, metadataID);
   let index = 0;
   while (index < links.length) {
+    if (process.exitCode) return;
     logLast(`Saving metadata for: ${index+1}/${links.length} pages...`, metadataID);
     let $ = await getHTML(links[index].url);
     // Check if submission still exists
@@ -83,9 +86,9 @@ export async function scrapeSubmissionInfo(data = null, scrapeComments) {
     // Save data to db
     await db.saveMetaData(links[index].url, data);
     // Save comments
-    if (scrapeComments) await scrapeComments($, data.id);
+    if (downloadComments) await scrapeComments($, data.id);
     index++;
-    if (index % 2) await waitFor();
+    if (index % 2) await waitFor(1000);
   }
   log('Save complete!');
 }

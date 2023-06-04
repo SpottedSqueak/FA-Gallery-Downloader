@@ -3,6 +3,7 @@ import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
 import fs from 'fs-extra';
 import got from 'got';
+import process from 'node:process';
 
 const id = 'download-status';
 const downloadDir = './fa_gallery_downloader/downloaded_content';
@@ -44,6 +45,7 @@ function downloadSetup({ content_url, content_name }) {
  * @returns 
  */
 async function startNextDownload() {
+  if (process.exitCode) return;
   const contentInfo = await db.getNextUnsavedContent();
   if (!contentInfo) return;
   // console.log(contentInfo);

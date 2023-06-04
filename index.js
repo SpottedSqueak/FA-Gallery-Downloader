@@ -1,5 +1,5 @@
-import * as db from './js/database-interface.js';
 import { init as initUtils, log, logLast, __dirname, getHTML } from './js/utils.js';
+import * as db from './js/database-interface.js';
 import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE } from './js/constants.js';
 import { handleLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
@@ -127,6 +127,7 @@ async function init() {
   // Enable user choice buttons
   await page.evaluate(`document.querySelectorAll('.user-choices > button')
   .forEach(div => div.disabled=false)`);
+  // console.dir(await db.getAllSubmissionData());
 }
 
 init();

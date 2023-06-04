@@ -59,7 +59,7 @@ export async function handleLogin(newBrowser) {
   // Get credentials
   log('Checking logged in status...');
   if (!await checkIfLoggedIn()) await logInUser();
-  logLast(`User logged-in as: <i>${username}</i>`);
+  logLast(`User logged-in as: <b>${username}</b>`);
   page?.close();
   page = null;
   browser = null;

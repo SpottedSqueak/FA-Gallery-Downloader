@@ -8,6 +8,8 @@
         "ecmaVersion": "latest",
         "sourceType": "module"
     },
+    "ignorePatterns": ["**/lib/**"],
     "rules": {
+        "no-fallthrough": "off"
     }
 }

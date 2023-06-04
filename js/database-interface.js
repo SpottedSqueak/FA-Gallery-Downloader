@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import fs from 'fs-extra';
+import process from 'node:process';
 
 const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
@@ -167,7 +168,14 @@ export function getComments(id) {
  * @returns All data in the database
  */
 export function getAllSubmissionData() {
-  return db.all('SELECT * from subdata WHERE id IS NOT null');
+  return db.all('SELECT * from subdata');
+}
+/**
+ * 
+ * @returns All complete data in the database
+ */
+export function getAllCompleteSubmissionData() {
+  return db.all('SELECT * from subdata WHERE id IS NOT NULL');
 }
 /**
  * Used for making future upgrades/updates to the database, to enforce

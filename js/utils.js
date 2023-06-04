@@ -3,12 +3,44 @@ import * as cheerio from 'cheerio';
 import got from 'got';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-// Get the folder directory name
-export const __dirname = join(dirname(fileURLToPath(import.meta.url)), '../');
+import fs from 'fs-extra';
+import util from 'util';
+import process from 'node:process';
 
+// Get the main folder directory name
+export const __dirname = join(dirname(fileURLToPath(import.meta.url)), '../');
+// Page used to display messages to user
 let page = null;
+// Create debug log
+const logDir = join(__dirname, 'fa_gallery_downloader/logs');
+const logFileName = join(logDir, `debug-${Date.now()}.log`);
+
+function setupLogger() {
+  fs.ensureFileSync(logFileName);
+  const logFile = fs.createWriteStream(logFileName, { flags : 'w' });
+  const hooks = ['log', 'error', 'info', 'warn', 'debug'];
+  const defaultHooks = {};
+  hooks.forEach((hook) => {
+    defaultHooks[hook] = console[hook];
+    console[hook] = function () {
+      logFile.write(`[${hook}] ${util.format.apply(null, arguments)}\n`);
+      defaultHooks[hook](util.format.apply(null, arguments));
+    }
+  });
+  process.on('uncaughtException', function(err) {
+    logFile.write(`${err.stack}`);
+    process.exit(2);
+  });
+  // Clean up log files
+  fs.readdir(logDir, (err, files) => {
+    files.reverse().slice(5).forEach(val => {
+      fs.remove(join(logDir, val));
+    });
+  });
+}
+
 /**
- * Creates a Promise that auto-resolves after the specified duration
+ * Creates a Promise that auto-resolves after the specified duration.
  * @param {Number} t 
  * @returns A timed Promise
  */
@@ -67,3 +99,5 @@ export function getHTML(url) {
 export function init(newPage) {
   page = newPage;
 }
+
+setupLogger();
