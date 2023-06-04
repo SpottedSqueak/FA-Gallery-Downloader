@@ -33,6 +33,9 @@ I plan to work on this more when I have time, but I'm a pretty busy guy! At the 
 ## #ToDo
 
 - [x] Hide console
+- [x] Allow downloads from other user's galleries (still requires login)
+- [x] Allow downloads of submission comments as well (not user icons though)
+- [x] Downloads a valid version of Chromium if none exist
 - [ ] Log errors to file
 - [ ] Clean up the interface some (better logging, maybe download animations?)
 - [ ] Export data to JSON/CSV files

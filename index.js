@@ -1,14 +1,16 @@
 import * as db from './js/database-interface.js';
-import { init as initUtils, log, logLast, __dirname } from './js/utils.js';
-import { FA_URL_BASE } from './js/constants.js';
+import { init as initUtils, log, logLast, __dirname, getHTML } from './js/utils.js';
+import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE } from './js/constants.js';
 import { handleLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
-import { getChromePath, getChromiumPath, getFirefoxPath } from 'browser-paths';
+import { getChromePath, getChromiumPath } from 'browser-paths';
 import puppeteer from 'puppeteer-core';
+import * as pBrowsers from '@puppeteer/browsers';
+import * as cliProgress from 'cli-progress';
 import fs from 'fs-extra';
-import { join } from 'path';
+import { join } from 'node:path';
 import { hideConsole } from 'node-hide-console-window';
 
 const startupHTML = fs.readFileSync(join(__dirname, './html/startup.html'), 'utf8');
@@ -18,10 +20,27 @@ const startupHTML = fs.readFileSync(join(__dirname, './html/startup.html'), 'utf
  * @returns 
  */
 async function getBrowserPath() {
-  const chromePath = await getChromiumPath() || await getChromePath();
-  const firefoxPath = (chromePath) ? '' : await getFirefoxPath();
-  const product = (!chromePath) ? 'firefox':'chrome';
-  return { chromePath, firefoxPath, product };
+  const product = 'chrome';
+  let chromePath = await getChromiumPath() || await getChromePath();
+  if (!chromePath) {
+    // We'll have to download one...
+    const os = pBrowsers.detectBrowserPlatform();
+    const browser = pBrowsers.Browser.CHROME;
+    const buildId = await pBrowsers.resolveBuildId(browser, os, pBrowsers.ChromeReleaseChannel.CANARY);
+    const cacheDir = join(__dirname, './fa_gallery_downloader/downloaded_browser');
+    const dlBar = new cliProgress.SingleBar({
+      format: 'Downloading compatible browser... | {bar} | {percentage}% | {value}/{total}',
+    }, cliProgress.Presets.legacy);
+    dlBar.start(100, 0);
+    const downloadProgressCallback = (dl, total) => { 
+      dlBar.update(Math.floor(dl/total * 100));
+    };
+    await pBrowsers.install({ browser, buildId, cacheDir, downloadProgressCallback });
+    chromePath = pBrowsers.computeExecutablePath({ browser, buildId, cacheDir});
+    dlBar.stop();
+  }
+  
+  return { chromePath, product };
 }
 
 const BROWSER_DIR = './fa_gallery_downloader/browser_profiles/';
@@ -30,12 +49,12 @@ const BROWSER_DIR = './fa_gallery_downloader/browser_profiles/';
  * @returns 
  */
 async function setupBrowser() {
-  const { chromePath, firefoxPath, product } = await getBrowserPath();
+  const { chromePath, product } = await getBrowserPath();
   const opts = {
     headless: false,
-    executablePath: chromePath || firefoxPath,
+    executablePath: chromePath,
     product,
-    args: (product === 'firefox') ? ['--profile-directory="Profile 1"', '--window-size=1024,700', '-no-remote'] : ['--app=data:text/html, Loading...', '--window-size=1024,700'],
+    args: DEFAULT_BROWSER_PARAMS,
     userDataDir: BROWSER_DIR + product,
     defaultViewport: null,
   };
@@ -53,10 +72,15 @@ async function setupBrowser() {
   return { browser, page };
 }
 
-async function downloadPath() {
-  const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${username}/`;
-  const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${username}/`;
+async function downloadPath(name = username, scrapeComments) {
+  const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
+  const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;
 
+  // Check if valid username
+  const $ = await getHTML(FA_USER_BASE + name);
+  if (/system.error/i.test($('title').text())) {
+    return log(`Invalid username: ${name}`);
+  }
   // Scrape data from gallery pages
   log('Gathering submission links from gallery pages...');
   await getSubmissionLinks(FA_GALLERY_URL, false);
@@ -64,44 +88,40 @@ async function downloadPath() {
   await getSubmissionLinks(FA_SCRAPS_URL, true);
   // Scrape data from collected submission pages
   Promise.all([
-    scrapeSubmissionInfo(),
+    scrapeSubmissionInfo(null, scrapeComments),
     initDownloads(),
   ]).then(() => {
     log('Everything downloaded from your gallery! ♥');
   });
 }
 
-async function viewGalleryPath(browser) {
-  // Pass off gallery view to that codebase
-  initGallery(browser);
-}
-
-// Test
 async function checkDBRepair() {
   log('Checking database...');
-  const blankUserNames = await db.needsUsernames();
-  if (blankUserNames.length) {
-    logLast('Database in need of repair! Working on that now...');
-    await scrapeSubmissionInfo(blankUserNames);
+  const inNeedofRepairArr = await db.needsRepair();
+  if (inNeedofRepairArr.length) {
+    logLast('Database incomplete! Working on that now...');
+    await scrapeSubmissionInfo(inNeedofRepairArr);
     logLast(`Database repaired!`);
   } else logLast(`Database OK!`);
 }
 
 async function init() {
-  hideConsole();
   // Init database
   await db.init();
   const { page, browser } = await setupBrowser();
+  hideConsole();
   // Setup user logging
   initUtils(page);
-  await handleLogin(browser);
   // Wait for path decision
-  await page.exposeFunction('userPath', (choice) => {
-    if (choice === 'start-download')
-      downloadPath();
-    else if (choice === 'view-gallery')
-      viewGalleryPath(browser);
+  await page.exposeFunction('userPath', (choice, name, scrapeComments = true) => {
+    if (choice === 'start-download') {
+      if (name) downloadPath(name, scrapeComments);
+      else log('Need a valid username first...');
+    } else if (choice === 'view-gallery')
+      initGallery(browser);
   });
+  await handleLogin(browser);
+  await page.evaluate(`window.setUsername('${username}')`);
   // Repair DB if needed
   await checkDBRepair();
   // Enable user choice buttons

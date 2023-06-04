@@ -15,6 +15,11 @@ let page = null;
 export async function waitFor(t = 1000) {
   return new Promise(r => setTimeout(r, t));
 }
+/**
+ * Updates the current display of download progress for content.
+ * @param {Object} data 
+ * @param {String} id 
+ */
 export async function logProgress(data, id) {
   const { transferred, total, percentage } = data;
   const divClass = id ? `.${id}`: 'p:last-child';

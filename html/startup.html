@@ -4,14 +4,42 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Current FA Download progress</title>
+  <title>🐾FA Gallery Downloader🐾</title>
+  <style>
+    .user-input {
+      margin: 1rem auto;
+    }
+    #status {
+      width: 60%;
+      height: 425px;
+      margin-top: -1rem;
+      border: 1px solid #000;
+      padding: 0 5px;
+      overflow: auto;
+    }
+  </style>
 </head>
 <body>
   <h2>🐾FA Gallery Downloader🐾</h2>
+  <div class="user-input">
+    <label for="username">Gallery to download:</label>
+    <input type="text" id="username" placeholder="Enter a username:" oninput="window.username = this.value"/>
+    <input type="checkbox" id="scrape-comments" checked onchange="window.scrapeComments = this.checked"/>
+    <label for="scrape-comments">Scrape Comments</label>
+  </div>
   <div class="user-choices">
-    <button id="start-download" disabled onclick="window.userPath(this.id)">Start/Continue Gallery Download</button>
+    <button id="start-download" disabled onclick="window.userPath(this.id, window.username, window.scrapeComments)">Start/Continue Gallery Download</button>
     <button id="view-gallery" onclick="window.userPath(this.id)">View Gallery</button>
   </div>
+  <h3>Status log:</h3>
   <div id="status"></div>
+  <script>
+    window.setUsername = (name) => {
+      window.username = name;
+      document.querySelector('#username').value = name;
+    }
+    // Initial values
+    window.scrapeComments = true;
+  </script>
 </body>
 </html>

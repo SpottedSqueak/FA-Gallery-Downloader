@@ -34,20 +34,40 @@ export async function getSubmissionLinks(url, isScraps = false) {
   }
   log(`${currLinks} submissions found!`);
 }
-
+export async function scrapeComments($, submission_id, url) {
+  $ = $ || await getHTML(url);
+  const comments = Array.from($('#comments-submission .comment_container'))
+    .map((val) => {
+      const $div = $(val);
+      const isDeleted = $div.find('comment-container').hasClass('deleted-comment-container');
+      return {
+        id: $div.find('.comment_anchor').attr('id'),
+        submission_id,
+        width: $div.attr('style'),
+        username: isDeleted ? '' : $div.find('comment-username').text().trim(),
+        desc: isDeleted ? '' : $div.find('comment-user-text .user-submitted-links').html().trim(),
+        subtitle: isDeleted ? '' : $div.find('comment-title').text().trim(),
+        date: isDeleted ? '' : $div.find('comment-date > span').attr('title'),
+      }
+    });
+  await db.saveComments(comments);
+}
 const metadataID = 'scrape-metadata';
 /**
  * Gathers all of the relevant metadata from all uncrawled submission pages.
  * @returns 
  */
-export async function scrapeSubmissionInfo(data = null) {
+export async function scrapeSubmissionInfo(data = null, scrapeComments) {
   const links = data || await db.getSubmissionLinks();
   if (!links.length) return;
-  log(`Saving metadata for: 0/${links.length}...`, metadataID);
+  log(`Saving metadata...`, metadataID);
   let index = 0;
   while (index < links.length) {
     logLast(`Saving metadata for: ${index+1}/${links.length} pages...`, metadataID);
     let $ = await getHTML(links[index].url);
+    // Check if submission still exists
+    if (!$ || !$('.submission-title').length) return;
+    // Get data if it does
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],
       title: $('.submission-title').text().trim(),
@@ -58,9 +78,12 @@ export async function scrapeSubmissionInfo(data = null) {
       content_url: $('.download > a').attr('href'),
       date_uploaded: $('.submission-id-sub-container .popup_date').attr('title'),
     };
-    // Test to fix FA weirdness
+    // Test to fix FA url weirdness
     if (!/^https/i.test(data.content_url)) data.content_url = 'https:' + data.content_url;
+    // Save data to db
     await db.saveMetaData(links[index].url, data);
+    // Save comments
+    if (scrapeComments) await scrapeComments($, data.id);
     index++;
     if (index % 2) await waitFor();
   }

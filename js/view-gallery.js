@@ -3,12 +3,12 @@ import * as db from './database-interface.js';
 import { join } from 'path';
 import fs from 'fs-extra';
 
-const galleryHTML = fs.readFileSync(join(__dirname, './html/gallery.html'), 'utf8');
+const galleryLink = join('file://', __dirname, './html/gallery.html');
 let page = null;
 
 export async function initGallery(browser) {
   page = await browser.newPage();
-  await page.setContent(galleryHTML);
+  await page.goto(galleryLink);
   await page.exposeFunction('getGalleryPage', async (offset) => {
     // Get all data for given gallery page using offset
     const data = await db.getGalleryPage(offset);

@@ -48,7 +48,7 @@ async function startNextDownload() {
   if (!contentInfo) return;
   // console.log(contentInfo);
   await downloadSetup(contentInfo)
-    .then(() => db.contentSaved(contentInfo.content_url));
+    .then(() => db.setContentSaved(contentInfo.content_url));
   await waitFor(2000);
   startNextDownload();
 }

@@ -14,6 +14,11 @@ export function getGalleryPage(offset = 0, count = 25) {
   LIMIT ${count} OFFSET ${offset}
   `);
 }
+/**
+ * Returns all 
+ * @param {String} id 
+ * @returns 
+ */
 export function getSubmissionPage(id) {
   return db.get(`
   SELECT *
@@ -26,7 +31,7 @@ export function getSubmissionPage(id) {
  * @param {String} content_url 
  * @returns Database Promise
  */
-export function contentSaved(content_url) {
+export function setContentSaved(content_url) {
   return db.run(`
   UPDATE subdata
   SET
@@ -45,12 +50,16 @@ export function getNextUnsavedContent() {
   WHERE is_content_saved = 0
   `);
 }
-
-export function needsUsernames() {
+/**
+ * Returns all entries without necessary data.
+ * @returns 
+ */
+export function needsRepair() {
   return db.all(`
   SELECT url
   FROM subdata
   WHERE username IS NULL
+  AND id IS NOT NULL
   `);
 }
 /**
@@ -105,8 +114,10 @@ export function getSubmissionLinks() {
 export function saveLinks(links, isScrap = false) {
   let placeholder = [];
   const data = links.reduce((acc, val) => {
-    placeholder.push('(?,?,?)');
-    acc.push(val, isScrap, false);
+    let data = [val, isScrap, false];
+    let marks = `(${data.map(()=>'?').join(',')})`;
+    acc.push(...data);
+    placeholder.push(marks);
     return acc;
     }, []);
   placeholder.join(',');
@@ -118,31 +129,75 @@ export function saveLinks(links, isScrap = false) {
   ) 
   VALUES ${placeholder}`, ...data);
 }
+export function saveComments(comments) {
+  let placeholder = [];
+  const data = comments.reduce((acc, c) => {
+    let data = [c.id, c.submission_id, c.width, c.username, c.desc, c.subtitle, c.date];
+    let marks = `(${data.map(()=>'?').join(',')})`;
+    acc.push(...data);
+    placeholder.push(marks);
+    return acc;
+  }, []);
+  placeholder.join(',');
+  return db.run(`
+  INSERT INTO commentdata (
+    id,
+    submission_id,
+    width,
+    username,
+    desc,
+    subtitle,
+    date
+  ) 
+  VALUES ${placeholder}
+  ON CONFLICT(id) DO UPDATE SET
+    desc = excluded.desc
+  `, ...data);
+}
+export function getComments(id) {
+  return db.all(`
+  SELECT *
+  FROM commentdata
+  WHERE submission_id = ${id}
+  AND desc IS NOT NULL
+  `);
+}
 /**
  * 
  * @returns All data in the database
  */
-export function getAllData() {
+export function getAllSubmissionData() {
   return db.all('SELECT * from subdata WHERE id IS NOT null');
 }
-
+/**
+ * Used for making future upgrades/updates to the database, to enforce
+ * a schema.
+ * @returns If an error occurred or not. If yes, we need to exit!
+ */
 export async function upgradeDatabase() {
   const { user_version } = await db.get('PRAGMA user_version');
   let version = user_version;
-  let error = false;
   switch(user_version) {
     case 0:
     case 1:
       await db.exec('ALTER TABLE subdata ADD COLUMN username TEXT')
-        .catch(() => {
-          // Column already exists, just continue
-        });
+        .catch(() => {/* Column already exists, just continue */});
       version = 2;
+    case 2:
+      await db.exec(`
+      CREATE TABLE IF NOT EXISTS commentdata (
+        id TEXT UNIQUE ON CONFLICT REPLACE,
+        submission_id TEXT,
+        width TEXT,
+        username TEXT,
+        desc TEXT,
+        subtitle TEXT,
+        date TEXT
+      )`);
+      version = 3;
   }
-  if(error) return error;
   await db.exec(`PRAGMA user_version = ${version}`);
   console.log(`Database now at: v${version}`);
-  return false;
 }
 
 /**
@@ -156,32 +211,35 @@ export async function init() {
     filename: dbLocation,
     driver: sqlite3.cached.Database,
   });
-  // Create base table
+  // Check for existence of necessary tables
   return db.get(`
     SELECT name 
     FROM sqlite_master 
     WHERE type='table' AND name='subdata'
   `).then(({ name } = {}) => {
+    // If not found, we need to create the table
     if (!name) {
       return db.exec(`
-      CREATE TABLE subdata (
-        id TEXT UNIQUE ON CONFLICT IGNORE, 
-        title TEXT, 
-        desc TEXT, 
-        tags TEXT, 
-        url TEXT UNIQUE ON CONFLICT IGNORE, 
-        is_scrap INTEGER, 
-        date_uploaded TEXT, 
-        content_url TEXT, 
-        content_name TEXT, 
-        is_content_saved INTEGER,
-        username TEXT
-      )`)
+        CREATE TABLE subdata (
+          id TEXT UNIQUE ON CONFLICT IGNORE, 
+          title TEXT, 
+          desc TEXT, 
+          tags TEXT, 
+          url TEXT UNIQUE ON CONFLICT IGNORE, 
+          is_scrap INTEGER, 
+          date_uploaded TEXT, 
+          content_url TEXT, 
+          content_name TEXT, 
+          is_content_saved INTEGER,
+          username TEXT
+        )
+      `)
       .then(db.exec(`PRAGMA user_version = 2`));
     }
   })
   .then(upgradeDatabase)
-  .then((hasError) => {
-    if(hasError) process.exit(2);
+  .catch((e) => {
+    console.log(e);
+    process.exit(2);
   });
 }
