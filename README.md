@@ -17,7 +17,7 @@ You'll need [Caxa](https://www.npmjs.com/package/caxa) to build the application 
 
 ***Other bundlers may work***, but I had a lot of trouble with `pkg`, which oddly doesn't seem to support ES6 syntax.
 
-This could easily be expanded to download other galleries (of course), and if there's demand for it I can add that in. My goal was for folks to use this to download and backup their own galleries.
+~~This could easily be expanded to download other galleries (of course), and if there's demand for it I can add that in.~~ Downloading other galleries is fully supported! My goal was for folks to use this to download and backup their own galleries originally.
 
 ## How it works
 
