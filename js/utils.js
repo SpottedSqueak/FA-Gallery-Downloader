@@ -11,6 +11,7 @@ import process from 'node:process';
 export const __dirname = join(dirname(fileURLToPath(import.meta.url)), '../');
 // Page used to display messages to user
 let page = null;
+
 // Create debug log
 const logDir = join(__dirname, 'fa_gallery_downloader/logs');
 const logFileName = join(logDir, `debug-${Date.now()}.log`);
@@ -32,7 +33,7 @@ function setupLogger() {
     process.exit(2);
   });
   // Clean up log files
-  fs.readdir(logDir, (err, files) => {
+  fs.readdir(logDir, (_err, files) => {
     files.reverse().slice(5).forEach(val => {
       fs.remove(join(logDir, val));
     });
@@ -52,12 +53,21 @@ export async function waitFor(t = 1000) {
  * @param {Object} data 
  * @param {String} id 
  */
-export async function logProgress(data, id) {
-  const { transferred, total, percentage } = data;
-  const divClass = id ? `.${id}`: 'p:last-child';
+export async function logProgress(data) {
+  const { transferred, total } = data;
   if (!page?.isClosed()) {
-    const html = `<progress value="${transferred}" max="${total}"></progress> ${percentage}%`;
-    await page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${html}'`);
+    await page.evaluate((transferred = 0, total = 0) => {
+      const progress = document.getElementById('progress-bar');
+      if (transferred && transferred >= total) {
+        setTimeout(() => {
+          progress.value = 0;
+          progress.max = 0;
+        }, 1000);
+        return;
+      }
+      progress.value = transferred;
+      progress.max = total;
+    }, transferred, total);
   }
 }
 /**
@@ -67,7 +77,7 @@ export async function logProgress(data, id) {
 export async function logLast(text, id) {
   const divClass = id ? `.${id}`: 'p:last-child';
   if (!page?.isClosed()) {
-    await page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${text}'`);
+    page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${text}'`).catch(() => log(text, id));
   }
   console.log(text);
 }
@@ -75,11 +85,11 @@ export async function logLast(text, id) {
  * Logs a message to the user.
  * @param {String} text 
  */
-export async function log(text, id) {
+export async function log(text, id, noConsole) {
   if (!page?.isClosed()) {
-    await page.evaluate(`document.querySelector('#status').innerHTML += '<p class="${id}">${text}</p>'`);
+    page.evaluate(`document.querySelector('#status').innerHTML += '<p class="${id}">${text}</p>'`);
   }
-  console.log(text);
+  if (!noConsole) console.log(text);
 }
 /**
  * Retrieves the HTML from the given URL and loads it into a Cheerio object.

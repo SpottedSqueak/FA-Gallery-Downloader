@@ -36,6 +36,12 @@ export async function getSubmissionLinks(url, isScraps = false) {
   }
   log(`${currLinks} submissions found!`);
 }
+/**
+ * Gathers and saves the comments from given HTML or url.
+ * @param {Cheerio} $ 
+ * @param {String} submission_id 
+ * @param {String} url 
+ */
 export async function scrapeComments($, submission_id, url) {
   $ = $ || await getHTML(url);
   const comments = Array.from($('#comments-submission .comment_container'))
@@ -52,7 +58,8 @@ export async function scrapeComments($, submission_id, url) {
         date: isDeleted ? '' : $div.find('comment-date > span').attr('title'),
       }
     });
-  await db.saveComments(comments);
+  if(!comments.length) return;
+  return db.saveComments(comments);
 }
 const metadataID = 'scrape-metadata';
 /**

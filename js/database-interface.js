@@ -6,26 +6,53 @@ import process from 'node:process';
 const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
 
-export function getGalleryPage(offset = 0, count = 25) {
-  return db.all(`
-  SELECT *
+export function getGalleryPage(offset = 0, count = 25, searchTerm = '') {
+  let searchQuery = '';
+  if (searchTerm) {
+    searchTerm = `%${searchTerm.replace(/\s/gi, '%')}%`;
+    searchQuery =`
+      AND (
+        title LIKE '${searchTerm}'
+        OR
+        username LIKE '${searchTerm}'
+        OR
+        tags LIKE '${searchTerm}'
+      )`;
+  }
+  const query = `
+  SELECT 
+    id, 
+    title,
+    username,
+    content_name,
+    date_uploaded,
+    is_content_saved
   FROM subdata
   WHERE id IS NOT NULL
+  ${searchQuery}
   ORDER BY id DESC
   LIMIT ${count} OFFSET ${offset}
-  `);
+  `;
+  return db.all(query);
 }
 /**
  * Returns all 
  * @param {String} id 
  * @returns 
  */
-export function getSubmissionPage(id) {
-  return db.get(`
+export async function getSubmissionPage(id) {
+  const data = {};
+  data.submission = await db.get(`
   SELECT *
   FROM subdata
   WHERE id = ${id}
   `);
+  data.comments = await db.all(`
+    SELECT *
+    FROM commentdata
+    WHERE submission_id = '${id}'
+  `);
+  return data;
 }
 /**
  * Marks the given content_url as saved (downloaded).
@@ -100,9 +127,10 @@ export function saveMetaData(url, d) {
  */
 export function getSubmissionLinks() {
   return db.all(`
-  SELECT url
+  SELECT rowid, url
   FROM subdata
   WHERE id IS null
+  ORDER BY rowid DESC
   `);
 }
 /**

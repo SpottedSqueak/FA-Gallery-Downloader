@@ -1,4 +1,4 @@
-import { waitFor, log, logLast, logProgress } from './utils.js';
+import { waitFor, log, logProgress } from './utils.js';
 import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
 import fs from 'fs-extra';
@@ -15,7 +15,7 @@ const downloadDir = './fa_gallery_downloader/downloaded_content';
  * @param {String} results.content_name
  * @returns 
  */
-function downloadSetup({ content_url, content_name }) {
+function downloadSetup(content_url, content_name) {
   return new Promise((resolve, reject) => {
     const dl = got.stream(content_url, faRequestHeaders);
     const flStream = fs.createWriteStream(`${downloadDir}/${content_name}`);
@@ -33,24 +33,27 @@ function downloadSetup({ content_url, content_name }) {
         reject();
       })
       .on("finish", () => {
-        logLast(`File "${content_name}" downloaded!`, id);
+        log(`File "${content_name}" downloaded!`, id);
         resolve();
       });
     dl.pipe(flStream);
   });
 }
 
+export async function downloadSpecificContent(content_url, content_name) {
+  await downloadSetup(content_url, content_name);
+  return db.setContentSaved(content_url);
+}
 /**
  * Gets the next content_url to download and records when it's finally saved.
  * @returns 
  */
 async function startNextDownload() {
   if (process.exitCode) return;
-  const contentInfo = await db.getNextUnsavedContent();
+  const {contentInfo} = await db.getNextUnsavedContent();
   if (!contentInfo) return;
-  // console.log(contentInfo);
-  await downloadSetup(contentInfo)
-    .then(() => db.setContentSaved(contentInfo.content_url));
+  const { content_url, content_name } = contentInfo;
+  await downloadSpecificContent(content_url, content_name);
   await waitFor(2000);
   startNextDownload();
 }

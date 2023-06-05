@@ -11,7 +11,7 @@ To install: `npm i`
 
 To run locally, just use `npm run start`
 
-NOTE: You'll need a **valid, up-to-date Chromium/Chrome or Firefox install** for this to work, as the program opens a browser instance to allow for login to FA. **Why is this?** A lot of users have their galleries hidden from site visitors, so this is the easiest way to consistently ensure access to galleries. This is done almost the exact same way [Postybirb](https://www.postybirb.com/) does it! Just that I don't embed a version of Chromium in this project (you can get one if you'd like on your own).
+NOTE: You'll need a **valid, up-to-date Chromium/Chrome install** for this to work, as the program opens a browser instance to allow for login to FA. **Why is this?** A lot of users have their galleries hidden from site visitors, so this is the easiest way to consistently ensure access to galleries. This is done almost the exact same way [Postybirb](https://www.postybirb.com/) does it! Just that I don't embed a version of Chromium in this project (you can get one if you'd like on your own).
 
 You'll need [Caxa](https://www.npmjs.com/package/caxa) to build the application bundle for your OS. Then run `npm run build:windows` | `npm run build:mac` | `npm run build:linux` to build for those environments (I currently only have access to Windows, sorry!).
 
@@ -39,9 +39,9 @@ I plan to work on this more when I have time, but I'm a pretty busy guy! At the 
 - [x] Log errors to file (Found under `/fa_gallery_downloader/logs`)
 - [ ] Clean up the interface some (better logging, maybe download animations?)
 - [ ] Export data to JSON/CSV files
-- [ ] Add a locally browsable copy of the given FA gallery
+- [x] Add a locally browsable copy of the given FA gallery
 - [ ] Format description text to BBCode for ease of cross posting (Maybe?)
-- [ ] Skip submission link gathering when traversing previously traversed galleries (yes, that makes sense)
+- [x] ~~Skip submission link gathering when traversing previously traversed galleries (yes, that makes sense)~~ (Not possible with how FA galleries work)
 
 
 Check out my stuff on FA if you'd like!

@@ -1,4 +1,4 @@
 import { createApp } from 'vue';
-import Gallery from './gallery-hub.js';
+import galleryHub from './gallery-hub.js';
 
-createApp(Gallery).mount('#app');
+createApp(galleryHub).mount('#app');

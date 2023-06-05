@@ -15,8 +15,16 @@
     .user-input {
       margin: 1rem auto;
     }
-    #status {
+    .status-container {
+      position: relative;
       width: 60%;
+    }
+    #progress-bar {
+      float: right;
+      margin-right: 10%;
+    }
+    #status {
+      width: 90%;
       height: 425px;
       margin-top: -1rem;
       border: 1px solid #000;
@@ -37,8 +45,11 @@
     <button id="start-download" disabled onclick="window.userPath(this.id, window.username, window.scrapeComments)">Start/Continue Gallery Download</button>
     <button id="view-gallery" onclick="window.userPath(this.id)">View Gallery</button>
   </div>
-  <h3>Status log:</h3>
-  <div id="status"></div>
+  <div class="status-container">
+    <progress id="progress-bar" value="0" max="0">jldj</progress>
+    <h3>Status log:</h3>
+    <div id="status"></div>
+  </div>
   <script>
     window.setUsername = (name) => {
       window.username = name;

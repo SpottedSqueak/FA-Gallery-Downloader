@@ -13,6 +13,7 @@ import fs from 'fs-extra';
 import { join } from 'node:path';
 import { hideConsole } from 'node-hide-console-window';
 
+const startupLink = join(__dirname, './html/startup.html');
 const startupHTML = fs.readFileSync(join(__dirname, './html/startup.html'), 'utf8');
 
 /**
@@ -39,7 +40,6 @@ async function getBrowserPath() {
     chromePath = pBrowsers.computeExecutablePath({ browser, buildId, cacheDir});
     dlBar.stop();
   }
-  
   return { chromePath, product };
 }
 
@@ -68,7 +68,8 @@ async function setupBrowser() {
     process.exit(1);
   });
   // Display startup page
-  await page.setContent(startupHTML);
+  //await page.setContent(startupHTML);
+  await page.goto(startupLink);
   return { browser, page };
 }
 
