@@ -50,7 +50,7 @@ export async function downloadSpecificContent(content_url, content_name) {
  */
 async function startNextDownload() {
   if (process.exitCode) return;
-  const {contentInfo} = await db.getNextUnsavedContent();
+  const contentInfo = await db.getNextUnsavedContent();
   if (!contentInfo) return;
   const { content_url, content_name } = contentInfo;
   await downloadSpecificContent(content_url, content_name);
@@ -64,6 +64,6 @@ async function startNextDownload() {
 export async function initDownloads() {
   fs.ensureDirSync(downloadDir);
   log('Starting downloads...', id);
-  await waitFor(1000);
+  await waitFor(5000);
   return startNextDownload();
 }

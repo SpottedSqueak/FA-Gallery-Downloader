@@ -76,6 +76,7 @@ export function getNextUnsavedContent() {
   SELECT content_url, content_name
   FROM subdata
   WHERE is_content_saved = 0
+  AND content_url IS NOT NULL
   `);
 }
 /**

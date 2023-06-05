@@ -1,7 +1,7 @@
 import { faRequestHeaders } from './login.js';
 import * as cheerio from 'cheerio';
 import got from 'got';
-import { dirname, join } from 'path';
+import { dirname, join, } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
 import util from 'util';
@@ -13,7 +13,7 @@ export const __dirname = join(dirname(fileURLToPath(import.meta.url)), '../');
 let page = null;
 
 // Create debug log
-const logDir = join(__dirname, 'fa_gallery_downloader/logs');
+const logDir ='./fa_gallery_downloader/logs';
 const logFileName = join(logDir, `debug-${Date.now()}.log`);
 
 function setupLogger() {

@@ -1,11 +1,11 @@
 import { __dirname } from './utils.js';
 import * as db from './database-interface.js';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { scrapeComments } from './scrape-data.js';
 import { downloadSpecificContent } from './download-content.js';
 
 const galleryLink = join('file://', __dirname, './html/gallery.html');
-const contentPath = join('file://', __dirname, 'fa_gallery_downloader/downloaded_content');
+const contentPath = resolve('file://', '../fa_gallery_downloader/downloaded_content' );
 
 let page = null;
 
