@@ -82,7 +82,7 @@ export async function scrapeSubmissionInfo(data = null, downloadComments) {
   stop = false;
   const links = data || await db.getSubmissionLinks();
   if (!links.length) return;
-  log(`[Data] Saving submission info...`, metadataID);
+  log(`[Data] Saving data for ${links.length} submissions...`, metadataID);
   let index = 0;
   while (index < links.length) {
     if (shouldStop()) return;
