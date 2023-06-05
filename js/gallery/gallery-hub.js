@@ -8,30 +8,32 @@ export default {
     submissionView
   },
   template: `
-  <div v-show="!submissionData" class="gallery-container">
-    <h2 class="gallery-title">🐾FA Gallery Viewer 🐾</h2>
-    <div class="gallery-controls">
-      <div class="gallery_controls__search-container">
-        <label for="search">Search:</label>
-        <input id="search" type="text" placeholder="Press enter to search..." @change="startSearch" />
+  <transition>
+    <div v-show="!submissionData" class="gallery-container">
+      <h2 class="gallery-title">🐾FA Gallery Viewer 🐾</h2>
+      <div class="gallery-controls">
+        <div class="gallery_controls__search-container">
+          <label for="search">Search:</label>
+          <input id="search" type="text" placeholder="Press enter to search..." @change="startSearch" />
+        </div>
+      </div>
+      <div class="gallery-navigation">
+        <button class="gallery-prev" :disabled="!offset" @click="previous">Prev</button>
+        <button class="gallery-next" :disabled="!results.length || results.length < count" @click="next">Next</button>
+      </div>
+      <div class="gallery-results-container">
+        <template v-for="result in results" :key="result.content_name">
+          <gallery-tile @load-submission="loadSubmission" v-bind="result"></gallery-tile>
+        </template>
+        <p v-if="!results.length">No results!</p>
+      </div>
+      <div class="gallery-navigation">
+        <button class="gallery-prev" :disabled="!offset" @click="previous">Prev</button>
+        <button class="gallery-next" :disabled="!results.length || results.length < count" @click="next">Next</button>
       </div>
     </div>
-    <div class="gallery-navigation">
-      <button class="gallery-prev" :disabled="!offset" @click="previous">Prev</button>
-      <button class="gallery-next" :disabled="!results.length" @click="next">Next</button>
-    </div>
-    <div class="gallery-results-container">
-      <template v-for="result in results" :key="result.content_name">
-        <gallery-tile @load-submission="loadSubmission" v-bind="result"></gallery-tile>
-      </template>
-      <p v-if="!results.length">No results!</p>
-    </div>
-    <div class="gallery-navigation">
-      <button class="gallery-prev" :disabled="!offset" @click="previous">Prev</button>
-      <button class="gallery-next" :disabled="!results.length" @click="next">Next</button>
-    </div>
-  </div>
-  <submission-view v-if="submissionData" v-bind="submissionData" @clear-submission="clearSubmission" @download-comments="downloadComments" @download-content="downloadContent"></submission-view>
+  </transition>
+    <submission-view v-if="submissionData" v-bind="submissionData" @clear-submission="goBack" @download-comments="downloadComments" @download-content="downloadContent"></submission-view>
   `,
   data() {
     return {
@@ -67,10 +69,13 @@ export default {
     },
     async loadSubmission(id, noScroll) {
       console.log(`Loading submission: ${id}`);
-      if (!noScroll) window.scrollTo(0, 0);
       const data = await window.getSubmissionPage(id);
       this.submissionData = data;
       window.location.hash = `view/${id}`;
+      if (!noScroll) window.scrollTo(0, 0);
+    },
+    goBack() {
+      window.history.back();
     },
     clearSubmission() {
       this.submissionData = null;

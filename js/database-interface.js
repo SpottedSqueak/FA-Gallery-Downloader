@@ -71,13 +71,25 @@ export function setContentSaved(content_url) {
  * Selects the next content_url to download.
  * @returns Database Promise that resolves to results of query
  */
-export function getNextUnsavedContent() {
-  return db.get(`
+export function getNextUnsavedContent(name) {
+  const defaultQuery = `
   SELECT content_url, content_name
   FROM subdata
   WHERE is_content_saved = 0
   AND content_url IS NOT NULL
-  `);
+  `;
+  if (!name) return db.get(defaultQuery);
+  const query =`
+    SELECT content_url, content_name
+    FROM subdata
+    WHERE is_content_saved = 0
+    AND content_url IS NOT NULL
+    AND username LIKE '${name}'
+  `;
+  return db.get(query).then(results => {
+    if (!results.content_name) return db.get(defaultQuery);
+    else return results;
+  })
 }
 /**
  * Returns all entries without necessary data.

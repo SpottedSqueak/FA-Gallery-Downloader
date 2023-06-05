@@ -29,7 +29,8 @@ function setupLogger() {
     }
   });
   process.on('uncaughtException', function(err) {
-    logFile.write(`${err.stack}`);
+    //logFile.write(`${err.stack}`);
+    console.error(err);
     process.exit(2);
   });
   // Clean up log files
@@ -53,21 +54,28 @@ export async function waitFor(t = 1000) {
  * @param {Object} data 
  * @param {String} id 
  */
-export async function logProgress(data) {
+export async function logProgress(data = {}, id='file-progress-bar') {
   const { transferred, total } = data;
   if (!page?.isClosed()) {
-    await page.evaluate((transferred = 0, total = 0) => {
-      const progress = document.getElementById('progress-bar');
-      if (transferred && transferred >= total) {
-        setTimeout(() => {
-          progress.value = 0;
-          progress.max = 0;
-        }, 1000);
-        return;
-      }
-      progress.value = transferred;
-      progress.max = total;
-    }, transferred, total);
+    if (total) {
+      await page.evaluate((transferred = 0, total = 0, id) => {
+        const progress = document.getElementById(id);
+        if (transferred && transferred >= total) {
+          setTimeout(() => {
+            progress.value = 0;
+            progress.max = 0;
+          }, 1000);
+        }
+        progress.setAttribute('value', transferred);
+        progress.max = total;
+      }, transferred, total, id);
+    } else {
+      // Set progress bar as "Busy"
+      await page.evaluate((id) => {
+        const progress = document.getElementById(id);
+        progress.removeAttribute('value');
+      }, id);
+    }
   }
 }
 /**
@@ -87,7 +95,7 @@ export async function logLast(text, id) {
  */
 export async function log(text, id, noConsole) {
   if (!page?.isClosed()) {
-    page.evaluate(`document.querySelector('#status').innerHTML += '<p class="${id}">${text}</p>'`);
+    page.evaluate(`document.querySelector('#status').insertAdjacentHTML('afterbegin', '<p class="${id}">${text}</p>')`);
   }
   if (!noConsole) console.log(text);
 }

@@ -47,7 +47,16 @@ label {
   font-size: 1.2rem;
   vertical-align: middle;
 }
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.2s;
+}
 
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
+/** Gallery Styles **/
 .gallery-title {
   position: absolute;
   left: 6.5%;
@@ -197,10 +206,13 @@ div.gallery-tile__info {
   height: 100%;
   background: #fff;
 }
+.music-embed {
+  align-self: center;
+}
 .download-link {
   font-size: 2em;
-  padding-top: 3em;
   cursor: pointer;
+  align-self: center;
 }
 
 .submission-metadata {
@@ -208,6 +220,16 @@ div.gallery-tile__info {
   height: auto;
   padding: 8px 8px 8px 16px;
   border-left: 1px solid var(--border-color);
+}
+.submission-metadata button {
+  width: 100%;
+  min-height: 2.4em;
+}
+.close-btn {
+  margin-bottom: 16px;
+}
+.full-size-btn {
+  font-size: 1em;
 }
 .submission-metadata__tags {
   margin: 0 auto;

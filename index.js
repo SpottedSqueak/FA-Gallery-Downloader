@@ -2,8 +2,8 @@ import { init as initUtils, log, logLast, __dirname, getHTML } from './js/utils.
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE } from './js/constants.js';
 import { handleLogin, username } from './js/login.js';
-import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
-import { initDownloads } from './js/download-content.js';
+import { getSubmissionLinks, scrapeSubmissionInfo, stopData } from './js/scrape-data.js';
+import { initDownloads, stopDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
 import { getChromePath, getChromiumPath } from 'browser-paths';
 import puppeteer from 'puppeteer-core';
@@ -25,6 +25,7 @@ async function getBrowserPath() {
   let chromePath = await getChromiumPath() || await getChromePath();
   if (!chromePath) {
     // We'll have to download one...
+    console.log('[Warn] No compatible browser found!');
     const os = pBrowsers.detectBrowserPlatform();
     const browser = pBrowsers.Browser.CHROME;
     const buildId = await pBrowsers.resolveBuildId(browser, os, pBrowsers.ChromeReleaseChannel.CANARY);
@@ -72,32 +73,31 @@ async function setupBrowser() {
   await page.goto(startupLink);
   return { browser, page };
 }
-
+let inProgress = false;
 async function downloadPath(name = username, scrapeComments) {
+  inProgress = true;
   const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
   const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;
 
   // Check if valid username
   const $ = await getHTML(FA_USER_BASE + name);
   if (/system.error/i.test($('title').text())) {
-    return log(`Invalid username: ${name}`);
+    return log(`[Warn] Invalid username: ${name}`);
   }
   // Scrape data from gallery pages
-  log('Gathering submission links from gallery pages...');
   await getSubmissionLinks(FA_GALLERY_URL, false);
-  log('Gathering submission links from scrap pages...');
   await getSubmissionLinks(FA_SCRAPS_URL, true);
   // Scrape data from collected submission pages
   Promise.all([
     scrapeSubmissionInfo(null, scrapeComments),
-    initDownloads(),
+    initDownloads(name),
   ]).then(() => {
     log('Everything downloaded from your gallery! ♥');
-  });
+  }).finally(() => inProgress = false);
 }
 
 async function checkDBRepair() {
-  log('Checking database...');
+  log('[Data] Checking database...');
   const inNeedofRepairArr = await db.needsRepair();
   if (inNeedofRepairArr.length) {
     logLast('Database incomplete! Working on that now...');
@@ -117,17 +117,22 @@ async function init() {
   await page.exposeFunction('userPath', (choice, name, scrapeComments = true) => {
     if (choice === 'start-download') {
       if (name) downloadPath(name, scrapeComments);
-      else log('Need a valid username first...');
+      else log('[Warn] Need a valid username first...');
     } else if (choice === 'view-gallery')
       initGallery(browser);
+    else if (choice === 'stop-all') {
+      // This is incomplete...Need a better way to do this...
+      stopDownloads();
+      stopData();
+      log('Shutting down...');
+    }
   });
   await handleLogin(browser);
   await page.evaluate(`window.setUsername('${username}')`);
   // Repair DB if needed
   await checkDBRepair();
   // Enable user choice buttons
-  await page.evaluate(`document.querySelectorAll('.user-choices > button')
-  .forEach(div => div.disabled=false)`);
+  await page.evaluate(`document.querySelector('#start-download').disabled = false;`);
   // console.dir(await db.getAllSubmissionData());
 }
 

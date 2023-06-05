@@ -5,6 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🐾FA Gallery Downloader🐾</title>
+  <link rel="icon" type="image/x-icon" href="./resources/favicon.ico">
   <style>
     * {
       box-sizing: border-box;
@@ -19,9 +20,10 @@
       position: relative;
       width: 60%;
     }
-    #progress-bar {
+    #progress-bars {
       float: right;
       margin-right: 10%;
+      text-align: right;
     }
     #status {
       width: 90%;
@@ -35,26 +37,42 @@
 </head>
 <body>
   <h2>🐾FA Gallery Downloader🐾</h2>
-  <div class="user-input">
+  <form class="user-input" onsubmit="return false">
     <label for="username">Gallery to download:</label>
-    <input type="text" id="username" placeholder="Enter a username:" oninput="window.username = this.value"/>
-    <input type="checkbox" id="scrape-comments" checked onchange="window.scrapeComments = this.checked"/>
+    <input type="text" id="username" placeholder="Enter a username:" />
+    <input type="checkbox" id="scrape-comments" checked />
     <label for="scrape-comments">Scrape Comments</label>
-  </div>
+  </form>
   <div class="user-choices">
-    <button id="start-download" disabled onclick="window.userPath(this.id, window.username, window.scrapeComments)">Start/Continue Gallery Download</button>
+    <button id="start-download" disabled>Start/Continue Gallery Download</button>
     <button id="view-gallery" onclick="window.userPath(this.id)">View Gallery</button>
+    <button id="stop-all" onclick="window.userPath(this.id)" disabled>Stop</button>
   </div>
   <div class="status-container">
-    <progress id="progress-bar" value="0" max="0">jldj</progress>
+    <div id="progress-bars">
+      <label for="data-progress-bar">Data:</label>
+      <progress id="data-progress-bar" value="0" max="0"></progress>
+      <br>
+      <label for="file-progress-bar">File:</label>
+      <progress id="file-progress-bar" value="0" max="0"></progress>
+    </div>
     <h3>Status log:</h3>
     <div id="status"></div>
   </div>
   <script>
     window.setUsername = (name) => {
-      window.username = name;
       document.querySelector('#username').value = name;
     }
+    const startDownload = document.querySelector('#start-download');
+    startDownload.addEventListener('click', (e) => {
+      const scrapeComments = document.querySelector('#scrape-comments').checked;
+      const username = document.querySelector('#username').value.trim();
+      window.userPath(e.target.id, username, scrapeComments);
+      document.querySelector('#stop-all').disabled = false;
+    });
+    document.querySelector('.user-input').addEventListener('submit', (e) => {
+      startDownload.click();
+    });
     // Initial values
     window.scrapeComments = true;
   </script>

@@ -1,9 +1,18 @@
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
-import { log, logLast, waitFor, getHTML } from './utils.js';
+import { log, logProgress, waitFor, getHTML } from './utils.js';
 import process from 'node:process';
 
 const scrapeID = 'scrape-div';
+const progressID = 'data-progress-bar';
+let stop = false;
+
+function shouldStop() {
+  return process.exitCode || stop;
+}
+export function stopData() {
+  stop = true;
+}
 /**
  * Walks the user's gallery in order to gather all submission links for future download.
  * @param {String} url Gallery URL
@@ -14,27 +23,30 @@ export async function getSubmissionLinks(url, isScraps = false) {
   let currPageCount = 1;
   let currLinks = 0;
   let stopLoop = false;
-  log('Starting up metadata scraper...', divID);
+  log('[Data] Searching user gallery for submission links...', divID);
+  logProgress({}, progressID);
   while(!stopLoop) {
-    if (process.exitCode) return;
-    logLast(`Querying Page ${currPageCount}/??...`, divID);
+    if (shouldStop()) return;
+    // logLast(`Querying Page ${currPageCount}/??...`, divID);
     let $ = await getHTML(url + currPageCount);
     let newLinks = Array.from($('#gallery-gallery u > a'))
       .map((div) => FA_URL_BASE + div.attribs.href);
     if (!newLinks.length) {
-      logLast(`Queried ${currPageCount}/${currPageCount} pages!`, divID);
+      log(`[Data] Found ${currPageCount} pages of submissions!`, divID);
       break;
     }
     await db.saveLinks(newLinks, isScraps).catch(() => stopLoop = true);
-    if (stopLoop) {
-      log('Data stopped early!');
+    if (stopLoop || shouldStop()) {
+      log('[Data] Stopped early!');
+      logProgress({transferred: 0, total: 0}, progressID);
       break;
     }
     currLinks = currLinks += newLinks.length;
     currPageCount++;
     await waitFor();
   }
-  log(`${currLinks} submissions found!`);
+  log(`[Data] ${currLinks} submissions found!`);
+  logProgress({transferred: 0, total: 0}, progressID);
 }
 /**
  * Gathers and saves the comments from given HTML or url.
@@ -67,13 +79,14 @@ const metadataID = 'scrape-metadata';
  * @returns 
  */
 export async function scrapeSubmissionInfo(data = null, downloadComments) {
+  stop = false;
   const links = data || await db.getSubmissionLinks();
   if (!links.length) return;
-  log(`Saving metadata...`, metadataID);
+  log(`[Data] Saving submission info...`, metadataID);
   let index = 0;
   while (index < links.length) {
-    if (process.exitCode) return;
-    logLast(`Saving metadata for: ${index+1}/${links.length} pages...`, metadataID);
+    if (shouldStop()) return;
+    logProgress({transferred: index+1, total: links.length}, progressID);
     let $ = await getHTML(links[index].url);
     // Check if submission still exists
     if (!$ || !$('.submission-title').length) return;
@@ -97,5 +110,6 @@ export async function scrapeSubmissionInfo(data = null, downloadComments) {
     index++;
     if (index % 2) await waitFor(1000);
   }
-  log('Save complete!');
+  log('[Data] Save complete!');
+  logProgress({transferred: 0, total: 0}, progressID);
 }

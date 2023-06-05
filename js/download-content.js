@@ -5,9 +5,16 @@ import fs from 'fs-extra';
 import got from 'got';
 import process from 'node:process';
 
-const id = 'download-status';
+const id = 'file-progress-bar';
 const downloadDir = './fa_gallery_downloader/downloaded_content';
+let stop = false;
 
+function shouldStop() {
+  return process.exitCode || stop;
+}
+export function stopDownloads() {
+  stop = true;
+}
 /**
  * Handles the actual download and progress update for file saving.
  * @param {Object} results Results of a db query
@@ -33,7 +40,7 @@ function downloadSetup(content_url, content_name) {
         reject();
       })
       .on("finish", () => {
-        log(`File "${content_name}" downloaded!`, id);
+        log(`[File] Downloaded: "${content_name}"`, id);
         resolve();
       });
     dl.pipe(flStream);
@@ -48,22 +55,23 @@ export async function downloadSpecificContent(content_url, content_name) {
  * Gets the next content_url to download and records when it's finally saved.
  * @returns 
  */
-async function startNextDownload() {
-  if (process.exitCode) return;
-  const contentInfo = await db.getNextUnsavedContent();
+async function startNextDownload(name) {
+  if (shouldStop()) return;
+  const contentInfo = await db.getNextUnsavedContent(name);
   if (!contentInfo) return;
   const { content_url, content_name } = contentInfo;
   await downloadSpecificContent(content_url, content_name);
   await waitFor(2000);
-  startNextDownload();
+  startNextDownload(name);
 }
 /**
  * Starts the download loop for all content.
  * @returns 
  */
-export async function initDownloads() {
+export async function initDownloads(name) {
+  stop = false;
   fs.ensureDirSync(downloadDir);
-  log('Starting downloads...', id);
   await waitFor(5000);
-  return startNextDownload();
+  log('[File] Starting downloads...', id);
+  return startNextDownload(name);
 }
