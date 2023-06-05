@@ -117,7 +117,7 @@ export default {
       return name.replace(/\bOP\b/gi, ' [OP] ');
     },
     getCleanUserImg(name) {
-      const cleanName = name.split(' ')[0].toLowerCase().replace(/[_-]/g, '');
+      const cleanName = name.split(' ')[0].toLowerCase().replace(/[_]/g, '');
       return `https://a.furaffinity.net/${cleanName}.gif`;
     },
     getCleanDesc(desc = '') {
