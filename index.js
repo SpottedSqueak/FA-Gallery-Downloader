@@ -1,9 +1,9 @@
-import { init as initUtils, log, logLast, __dirname, getHTML } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE } from './js/constants.js';
-import { handleLogin, username } from './js/login.js';
-import { getSubmissionLinks, scrapeSubmissionInfo, stopData } from './js/scrape-data.js';
-import { initDownloads, stopDownloads } from './js/download-content.js';
+import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
+import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
+import { initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
 import { getChromePath, getChromiumPath } from 'browser-paths';
 import puppeteer from 'puppeteer-core';
@@ -61,8 +61,7 @@ async function setupBrowser() {
   };
   fs.ensureDirSync(BROWSER_DIR + product);
   const browser = await puppeteer.launch(opts);
-  let page = await browser.pages();
-  page = page[0];
+  let page = await browser.pages().then(p => p[0]);
   page.setDefaultNavigationTimeout(0);
   // Close program when main page is closed
   page.on('close', () => {
@@ -74,10 +73,11 @@ async function setupBrowser() {
   return { browser, page };
 }
 let inProgress = false;
-async function downloadPath(name = username, scrapeComments) {
+async function downloadPath(name = username, scrapeGallery, scrapeComments, scrapeFavorites) {
   inProgress = true;
   const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
   const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;
+  const FA_FAVORITES_URL = `${FA_URL_BASE}/favorites/${name}/`;
 
   // Check if valid username
   const $ = await getHTML(FA_USER_BASE + name);
@@ -85,14 +85,17 @@ async function downloadPath(name = username, scrapeComments) {
     return log(`[Warn] Invalid username: ${name}`);
   }
   // Scrape data from gallery pages
-  await getSubmissionLinks(FA_GALLERY_URL, false);
-  await getSubmissionLinks(FA_SCRAPS_URL, true);
+  if (scrapeGallery) {
+    await getSubmissionLinks({ url: FA_GALLERY_URL });
+    await getSubmissionLinks({ url: FA_SCRAPS_URL, isScraps: true });
+  }
+  if (scrapeFavorites) await getSubmissionLinks({ url: FA_FAVORITES_URL, isFavorites: true, username: name });
   // Scrape data from collected submission pages
   Promise.all([
     scrapeSubmissionInfo(null, scrapeComments),
     initDownloads(name),
   ]).then(() => {
-    log('Everything downloaded from your gallery! ♥');
+    if(!stop.now) log('Requested downloads complete! ♥');
   }).finally(() => inProgress = false);
 }
 
@@ -114,26 +117,29 @@ async function init() {
   // Setup user logging
   initUtils(page);
   // Wait for path decision
-  await page.exposeFunction('userPath', (choice, name, scrapeComments = true) => {
-    if (choice === 'start-download') {
-      if (name) downloadPath(name, scrapeComments);
+  await page.exposeFunction('userPath', async ({choice, name, scrapeGallery, scrapeComments, scrapeFavorites }) => {
+    if (choice === 'login') {
+      stop.reset();
+      if (!username) await handleLogin(browser);
+      else await forceNewLogin(browser);
+      await page.evaluate(`window.setUsername('${username}')`);
+    } else if (choice === 'start-download') {
+      stop.reset();
+      if (!username) await handleLogin(browser);
+      if (name) downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
       else log('[Warn] Need a valid username first...');
     } else if (choice === 'view-gallery')
       initGallery(browser);
     else if (choice === 'stop-all') {
-      // This is incomplete...Need a better way to do this...
-      stopDownloads();
-      stopData();
-      log('Shutting down...');
+      stop.now = true;
+      log('Stopping data scraping...');
     }
   });
-  await handleLogin(browser);
-  await page.evaluate(`window.setUsername('${username}')`);
+  if (await checkIfLoggedIn(page)) await page.evaluate(`window.setUsername('${username}')`);
   // Repair DB if needed
   await checkDBRepair();
   // Enable user choice buttons
-  await page.evaluate(`document.querySelector('#start-download').disabled = false;`);
-  // console.dir(await db.getAllSubmissionData());
+  // await page.evaluate(`document.querySelector('#start-download').disabled = false;`);
 }
 
 init();

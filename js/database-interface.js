@@ -17,6 +17,8 @@ export function getGalleryPage(offset = 0, count = 25, searchTerm = '') {
         username LIKE '${searchTerm}'
         OR
         tags LIKE '${searchTerm}'
+        OR
+        desc LIKE '${searchTerm}'
       )`;
   }
   const query = `
@@ -150,13 +152,13 @@ export function getSubmissionLinks() {
  * Creates blank entries in the database for all given submission URLs
  * for later updating.
  * @param {Array<Strings>} links 
- * @param {Boolean} isScrap 
+ * @param {Boolean} isScraps 
  * @returns 
  */
-export function saveLinks(links, isScrap = false) {
+export function saveLinks(links, isScraps = false) {
   let placeholder = [];
   const data = links.reduce((acc, val) => {
-    let data = [val, isScrap, false];
+    let data = [val, isScraps, false];
     let marks = `(${data.map(()=>'?').join(',')})`;
     acc.push(...data);
     placeholder.push(marks);
@@ -204,12 +206,52 @@ export function getComments(id) {
   AND desc IS NOT NULL
   `);
 }
+export function setOwnedAccount(username) {
+  if (!username) return;
+  return db.run(`
+    INSERT INTO ownedaccounts (username)
+    VALUES (?)
+  `, username);
+}
+export function getOwnedAccounts() {
+  return db.all(`
+    SELECT *
+    FROM ownedaccounts
+  `);
+}
+export function saveFavorites(username, links) {
+  let placeholder = [];
+  const data = links.reduce((acc, val) => {
+    let data = [username+val, username, val];
+    let marks = `(${data.map(()=>'?').join(',')})`;
+    acc.push(...data);
+    placeholder.push(marks);
+    return acc;
+    }, []);
+  placeholder.join(',');
+  return db.run(`
+    INSERT INTO favorites (id, username, url)
+    VALUES ${placeholder}
+  `, ...data);
+}
+export function getAllFavoritesForUser(username) {
+  if (!username) return;
+  return db.all(`
+    SELECT *
+    FROM subdata
+    WHERE url IN (
+      SELECT url
+      FROM favorites
+      WHERE username = '${username}'
+    )
+  `);
+}
 /**
  * 
  * @returns All data in the database
  */
 export function getAllSubmissionData() {
-  return db.all('SELECT * from subdata');
+  return db.all('SELECT url from subdata');
 }
 /**
  * 
@@ -244,6 +286,27 @@ export async function upgradeDatabase() {
         date TEXT
       )`);
       version = 3;
+    case 3:
+      await db.exec(`
+      CREATE TABLE IF NOT EXISTS ownedaccounts (
+        username TEXT UNIQUE ON CONFLICT IGNORE
+      )`);
+      await db.exec(`
+      CREATE TABLE IF NOT EXISTS favorites (
+        id TEXT UNIQUE ON CONFLICT IGNORE,
+        url TEXT,
+        username TEXT
+      )`);
+      version = 4;
+    default:
+      await db.exec(`PRAGMA auto_vacuum = INCREMENTAL`);
+      /**await db.exec(`DROP TABLE favorites`);
+      await db.exec(`
+      CREATE TABLE IF NOT EXISTS favorites (
+        id TEXT UNIQUE ON CONFLICT IGNORE,
+        url TEXT,
+        username TEXT
+      )`);*/
   }
   await db.exec(`PRAGMA user_version = ${version}`);
   console.log(`Database now at: v${version}`);
@@ -281,9 +344,8 @@ export async function init() {
           content_name TEXT, 
           is_content_saved INTEGER,
           username TEXT
-        )
-      `)
-      .then(db.exec(`PRAGMA user_version = 2`));
+        )`)
+        .then(db.exec(`PRAGMA user_version = 2`));
     }
   })
   .then(upgradeDatabase)

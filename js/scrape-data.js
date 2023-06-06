@@ -1,52 +1,52 @@
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
-import { log, logProgress, waitFor, getHTML } from './utils.js';
-import process from 'node:process';
+import { log, logProgress, waitFor, getHTML, stop } from './utils.js';
 
 const scrapeID = 'scrape-div';
 const progressID = 'data-progress-bar';
-let stop = false;
 
-function shouldStop() {
-  return process.exitCode || stop;
-}
-export function stopData() {
-  stop = true;
-}
 /**
  * Walks the user's gallery in order to gather all submission links for future download.
  * @param {String} url Gallery URL
  * @param {Boolean} isScraps Is this the scraps folder or not?
  */
-export async function getSubmissionLinks(url, isScraps = false) {
+export async function getSubmissionLinks({ url, username, isScraps = false, isFavorites = false }) {
+  let dirName = (isFavorites) ? 'favorites': (isScraps) ? 'scraps' : 'gallery';
   const divID = `${scrapeID}${isScraps ? '-scraps':''}`;
   let currPageCount = 1;
   let currLinks = 0;
   let stopLoop = false;
-  log('[Data] Searching user gallery for submission links...', divID);
-  logProgress({}, progressID);
+  let nextPage = ''; // Only valid if in favorites!
+  log(`[Data] Searching user ${dirName} for submission links...`, divID);
+  logProgress.busy(progressID);
   while(!stopLoop) {
-    if (shouldStop()) return;
-    // logLast(`Querying Page ${currPageCount}/??...`, divID);
-    let $ = await getHTML(url + currPageCount);
-    let newLinks = Array.from($('#gallery-gallery u > a'))
+    if (stop.now) return logProgress.reset(progressID);
+    let $ =  await getHTML((!nextPage) ? url + currPageCount : nextPage);
+    // Check for content
+    let newLinks = Array.from($('figcaption a[href^="/view"]'))
       .map((div) => FA_URL_BASE + div.attribs.href);
     if (!newLinks.length) {
       log(`[Data] Found ${currPageCount} pages of submissions!`, divID);
       break;
     }
     await db.saveLinks(newLinks, isScraps).catch(() => stopLoop = true);
-    if (stopLoop || shouldStop()) {
+    if (stopLoop || stop.now) {
       log('[Data] Stopped early!');
-      logProgress({transferred: 0, total: 0}, progressID);
+      logProgress.reset(progressID);
       break;
     }
+    if (isFavorites && username) await db.saveFavorites(username, newLinks);
     currLinks = currLinks += newLinks.length;
     currPageCount++;
+    if (isFavorites) {
+      nextPage = $(`.pagination a.right`).attr('href');
+      if (nextPage) nextPage = url.split('/favorite')[0] + nextPage;
+      else break;
+    }
     await waitFor();
   }
   log(`[Data] ${currLinks} submissions found!`);
-  logProgress({transferred: 0, total: 0}, progressID);
+  logProgress.reset(progressID);
 }
 /**
  * Gathers and saves the comments from given HTML or url.
@@ -55,6 +55,7 @@ export async function getSubmissionLinks(url, isScraps = false) {
  * @param {String} url 
  */
 export async function scrapeComments($, submission_id, url) {
+  if (stop.now) return logProgress.reset(progressID);
   $ = $ || await getHTML(url);
   const comments = Array.from($('#comments-submission .comment_container'))
     .map((val) => {
@@ -79,13 +80,12 @@ const metadataID = 'scrape-metadata';
  * @returns 
  */
 export async function scrapeSubmissionInfo(data = null, downloadComments) {
-  stop = false;
   const links = data || await db.getSubmissionLinks();
   if (!links.length) return;
   log(`[Data] Saving data for ${links.length} submissions...`, metadataID);
   let index = 0;
   while (index < links.length) {
-    if (shouldStop()) return;
+    if (stop.now) return logProgress.reset(progressID);
     logProgress({transferred: index+1, total: links.length}, progressID);
     let $ = await getHTML(links[index].url);
     // Check if submission still exists
@@ -111,5 +111,5 @@ export async function scrapeSubmissionInfo(data = null, downloadComments) {
     if (index % 2) await waitFor(1000);
   }
   log('[Data] Save complete!');
-  logProgress({transferred: 0, total: 0}, progressID);
+  logProgress.reset(progressID);
 }

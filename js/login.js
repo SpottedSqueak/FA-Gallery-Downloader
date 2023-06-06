@@ -1,4 +1,5 @@
 import { FA_URL_BASE, FA_LOGIN } from "./constants.js";
+import { getOwnedAccounts, setOwnedAccount } from "./database-interface.js";
 import { getHTML, log, logLast } from "./utils.js";
 
 export let faRequestHeaders = null;
@@ -29,9 +30,8 @@ async function checkIfCookiesExpired() {
   return notLoggedIn;
 }
 
-async function checkIfLoggedIn() {
-  let queryPage = await browser.pages();
-  queryPage = queryPage[0];
+export async function checkIfLoggedIn(...queryPage) {
+  queryPage = queryPage[0] || await browser.pages().then(p => p[0]);
   const cookies = await queryPage.cookies(FA_URL_BASE);
   const loggedInCookies = { a: false, b: false };
   cookies.forEach(val => {
@@ -44,7 +44,7 @@ async function checkIfLoggedIn() {
 }
 
 async function logInUser() {
-  page = await browser.newPage();
+  page = page || await browser.newPage();
   page.setDefaultNavigationTimeout(0);
   logLast('Not logged in! Requesting user to do so...');
   await page.goto(FA_LOGIN);
@@ -53,14 +53,23 @@ async function logInUser() {
   }
   await checkIfLoggedIn();
 }
+export async function forceNewLogin(browser) {
+  queryPage = await browser.pages().then(p => p[0]);
+  // Log previous user out
+  const cookies = await queryPage.cookies(FA_URL_BASE);
+  await queryPage.deleteCookie(...cookies);
+  return handleLogin(browser);
+}
 
 export async function handleLogin(newBrowser) {
-  browser = newBrowser;
+  browser = browser || newBrowser;
   // Get credentials
   log('Checking logged in status...');
   if (!await checkIfLoggedIn()) await logInUser();
-  logLast(`User logged-in as: <b>${username}</b>`);
+  if(username) {
+    log(`User logged-in as: <b>${username}</b>`);
+    await setOwnedAccount(username);
+  }
   page?.close();
   page = null;
-  browser = null;
 }

@@ -5,8 +5,20 @@ import { dirname, join, } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
 import util from 'util';
-import process from 'node:process';
+import { exitCode, default as process } from 'node:process';
 
+export const stop = {
+  should: false,
+  get now() {
+    return this.should || !!exitCode;
+  },
+  set now(shouldStop) {
+    this.should = shouldStop;
+  },
+  reset() {
+    this.should = false;
+  }
+};
 // Get the main folder directory name
 export const __dirname = join(dirname(fileURLToPath(import.meta.url)), '../');
 // Page used to display messages to user
@@ -30,6 +42,7 @@ function setupLogger() {
   });
   process.on('uncaughtException', function(err) {
     //logFile.write(`${err.stack}`);
+    stop.now = true;
     console.error(err);
     process.exit(2);
   });
@@ -78,6 +91,12 @@ export async function logProgress(data = {}, id='file-progress-bar') {
     }
   }
 }
+logProgress.reset = (id) => {
+  if (id) logProgress({ transferred: 0, total: 1 }, id);
+}
+logProgress.busy = (id) => {
+  if (id) logProgress({ transferred: 0, total: 0 }, id);
+}
 /**
  * Overwrites the previous log message with a new one
  * @param {String} text 
@@ -110,6 +129,7 @@ export function getHTML(url) {
     return cheerio.load(result);
   }).catch((e) => console.log(e));
 }
+
 /**
  * Binds the given Page object for future log messages.
  * @param {Puppeteer.Page} newPage 
