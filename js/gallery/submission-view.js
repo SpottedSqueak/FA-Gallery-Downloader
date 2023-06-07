@@ -94,7 +94,7 @@ export default {
       );
     },
     computedContentPath() {
-      return `${this.contentPath}\\${this.submission.content_name}`;
+      return `${this.contentPath}\\${this.submission.username}\\${this.submission.content_name}`;
     },
     fileExtension() {
       return this.submission.content_name.split('.').pop();
@@ -137,8 +137,7 @@ export default {
       this.$emit('downloadComments', id, url);
     },
     downloadContent() {
-      const { id, content_url, content_name } = this.submission;
-      this.$emit('downloadContent', id, content_url, content_name);
+      this.$emit('downloadContent', this.submission);
     },
     openInNewWindow() {
       window.open(this.computedContentPath, '_blank');

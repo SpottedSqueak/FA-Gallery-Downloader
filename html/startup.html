@@ -104,11 +104,13 @@
     <div id="status"></div>
   </div>
   <script>
-    window.setUsername = (name) => {
+    window.setSearchName = (name) => {
       if (!name) return;
       const usernameDiv = document.querySelector('#username');
       usernameDiv.value = usernameDiv.value || name;
-      document.querySelector('.logged-in-status span').textContent = name;
+    }
+    window.setUsername = (name) => {
+      document.querySelector('.logged-in-status span').textContent = name || '???';
     }
     const startDownload = document.querySelector('#start-download');
     startDownload.addEventListener('click', (e) => {

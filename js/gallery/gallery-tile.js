@@ -36,7 +36,7 @@ export default {
       );
     },
     computedImgPath() {
-      return `${this.contentPath}\\${this.content_name}`;
+      return `${this.contentPath}\\${this.username}\\${this.content_name}`;
     },
     fileExtension() {
       return this.content_name.split('.').pop().toUpperCase();

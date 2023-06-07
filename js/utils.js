@@ -1,4 +1,4 @@
-import { faRequestHeaders } from './login.js';
+import { faRequestHeaders, username } from './login.js';
 import * as cheerio from 'cheerio';
 import got from 'got';
 import { dirname, join, } from 'path';
@@ -129,7 +129,12 @@ export function getHTML(url) {
     return cheerio.load(result);
   }).catch((e) => console.log(e));
 }
-
+export function passUsername() {
+  return page.evaluate(`window?.setUsername('${username}')`);
+}
+export function passSearchName(name) {
+  if (name) return page.evaluate(`window?.setSearchName('${name}')`);
+}
 /**
  * Binds the given Page object for future log messages.
  * @param {Puppeteer.Page} newPage 

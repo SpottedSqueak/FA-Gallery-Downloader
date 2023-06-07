@@ -1,9 +1,9 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
-import { initDownloads } from './js/download-content.js';
+import { cleanupFileStructure, initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
 import { getChromePath, getChromiumPath } from 'browser-paths';
 import puppeteer from 'puppeteer-core';
@@ -107,7 +107,9 @@ async function checkDBRepair() {
     await scrapeSubmissionInfo(inNeedofRepairArr);
     logLast(`Database repaired!`);
   } else logLast(`Database OK!`);
+  await cleanupFileStructure();
 }
+
 async function init() {
   // Init database
   await db.init();
@@ -116,18 +118,16 @@ async function init() {
   // Setup user logging
   initUtils(page);
   // Wait for path decision
-  function passUsername(name = username) {
-    if (name) return page.evaluate(`window.setUsername('${name}')`);
-  }
   await page.exposeFunction('userPath', async ({choice, name, scrapeGallery, scrapeComments, scrapeFavorites }) => {
     stop.reset();
     if (choice === 'login') {
       if (!username) await handleLogin(browser);
       else await forceNewLogin(browser);
-      await passUsername(name);
+      await passUsername();
+      await passSearchName(username);
     } else if (choice === 'start-download') {
       if (!username) await handleLogin(browser);
-      await passUsername(name);
+      await passUsername();
       if (name) downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
       else log('[Warn] Need a valid username first...');
     } else if (choice === 'view-gallery')
@@ -139,12 +139,11 @@ async function init() {
   });
   page.on('load', () => {
     passUsername();
+    passSearchName(username);
   });
   if (await checkIfLoggedIn(page)) await passUsername();
   // Repair DB if needed
   await checkDBRepair();
-  // Enable user choice buttons
-  // await page.evaluate(`document.querySelector('#start-download').disabled = false;`);
 }
 
 init();

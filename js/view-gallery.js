@@ -3,6 +3,7 @@ import * as db from './database-interface.js';
 import { join, resolve } from 'path';
 import { scrapeComments } from './scrape-data.js';
 import { downloadSpecificContent } from './download-content.js';
+import { handleLogin, username } from './login.js';
 
 const galleryLink = join('file://', __dirname, './html/gallery.html');
 const contentPath = resolve('file://', '../fa_gallery_downloader/downloaded_content' );
@@ -22,11 +23,15 @@ export async function initGallery(browser) {
     return data;
   });
   await page.exposeFunction('downloadComments', async (id, url) => {
+    if (!username) await handleLogin(browser);
+    if (!username) return false;
     const isComplete = await scrapeComments(null, id, url);
     return !!isComplete;
   });
-  await page.exposeFunction('downloadContent', async (url, name) => {
-    const isComplete = await downloadSpecificContent(url, name);
+  await page.exposeFunction('downloadContent', async (contentInfo) => {
+    if (!username) await handleLogin(browser);
+    if (!username) return false;
+    const isComplete = await downloadSpecificContent(contentInfo);
     return !!isComplete;
   });
   await page.exposeFunction('getContentPath', () => contentPath);

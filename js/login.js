@@ -1,5 +1,5 @@
 import { FA_URL_BASE, FA_LOGIN } from "./constants.js";
-import { getOwnedAccounts, setOwnedAccount } from "./database-interface.js";
+import { setOwnedAccount } from "./database-interface.js";
 import { getHTML, log, logLast } from "./utils.js";
 
 export let faRequestHeaders = null;
@@ -22,7 +22,6 @@ function setUsername($) {
   username = href.split('user/')[1].split('/')[0];
   return username;
 }
-
 async function checkIfCookiesExpired() {
   // Do a final check just to be sure cookies didn't expire
   const $ = await getHTML(FA_URL_BASE);

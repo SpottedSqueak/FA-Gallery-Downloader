@@ -6,6 +6,12 @@ import process from 'node:process';
 const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
 
+function genericInsert(table, columns, placeholders, data) {
+  return db.run(`
+  INSERT INTO ${table} (${columns})
+  VALUES ${placeholders.join(',')}
+`, ...data);
+}
 export function getGalleryPage(offset = 0, count = 25, query = {}) {
   let { username, searchTerm, galleryType } = query;
   let searchQuery = '';
@@ -84,8 +90,25 @@ export function setContentSaved(content_url) {
   return db.run(`
   UPDATE subdata
   SET
-    is_content_saved = 1
+    is_content_saved = 1,
+    moved_content = 1
   WHERE content_url = '${content_url}'
+  `);
+}
+export function setContentMoved(content_name) {
+  return db.run(`
+  UPDATE subdata
+  SET
+    moved_content = 1
+  WHERE content_name = '${content_name}'
+  `);
+}
+export function getAllDownloadedContentData() {
+  return db.all(`
+  SELECT content_url, content_name, username
+  FROM subdata
+  WHERE is_content_saved = 1
+    AND moved_content = 0
   `);
 }
 /**
@@ -94,14 +117,14 @@ export function setContentSaved(content_url) {
  */
 export function getNextUnsavedContent(name) {
   const defaultQuery = `
-  SELECT content_url, content_name
-  FROM subdata
-  WHERE is_content_saved = 0
-  AND content_url IS NOT NULL
+    SELECT content_url, content_name, username
+    FROM subdata
+    WHERE is_content_saved = 0
+    AND content_url IS NOT NULL
   `;
   if (!name) return db.get(defaultQuery);
   const query =`
-    SELECT content_url, content_name
+    SELECT content_url, content_name, username
     FROM subdata
     WHERE is_content_saved = 0
     AND content_url IS NOT NULL
@@ -122,6 +145,13 @@ export function needsRepair() {
   FROM subdata
   WHERE username IS NULL
   AND id IS NOT NULL
+  `);
+}
+export function getAllUsernames() {
+  return db.all(`
+  SELECT DISTINCT username
+  FROM subdata
+  WHERE username IS NOT NULL
   `);
 }
 /**
@@ -183,14 +213,7 @@ export function saveLinks(links, isScraps = false) {
     placeholder.push(marks);
     return acc;
     }, []);
-  placeholder.join(',');
-  return db.run(`
-  INSERT INTO subdata (
-    url, 
-    is_scrap, 
-    is_content_saved
-  ) 
-  VALUES ${placeholder}`, ...data);
+  return genericInsert('subdata', 'url, is_scrap, is_content_saved', placeholder, data);
 }
 export function saveComments(comments) {
   let placeholder = [];
@@ -227,10 +250,7 @@ export function getComments(id) {
 }
 export function setOwnedAccount(username) {
   if (!username) return;
-  return db.run(`
-    INSERT INTO ownedaccounts (username)
-    VALUES (?)
-  `, username);
+  return genericInsert('ownedaccounts', 'username', ['(?)'], [username]);
 }
 export function getOwnedAccounts() {
   return db.all(`
@@ -247,11 +267,7 @@ export function saveFavorites(username, links) {
     placeholder.push(marks);
     return acc;
     }, []);
-  placeholder.join(',');
-  return db.run(`
-    INSERT INTO favorites (id, username, url)
-    VALUES ${placeholder}
-  `, ...data);
+  return genericInsert('favorites', 'id, username, url', placeholder, data);
 }
 export function getAllFavoritesForUser(username) {
   if (!username) return;
@@ -317,18 +333,15 @@ export async function upgradeDatabase() {
         username TEXT
       )`);
       version = 4;
+    case 4:
+      await db.exec('ALTER TABLE subdata ADD COLUMN moved_content INTEGER default 0')
+      .catch(() => {/* Column already exists, just continue */});
+      version = 5;
     default:
       await db.exec(`PRAGMA auto_vacuum = INCREMENTAL`);
-      /**await db.exec(`DROP TABLE favorites`);
-      await db.exec(`
-      CREATE TABLE IF NOT EXISTS favorites (
-        id TEXT UNIQUE ON CONFLICT IGNORE,
-        url TEXT,
-        username TEXT
-      )`);*/
+      await db.exec(`PRAGMA user_version = ${version}`);
+      console.log(`Database now at: v${version}`);
   }
-  await db.exec(`PRAGMA user_version = ${version}`);
-  console.log(`Database now at: v${version}`);
 }
 
 /**
@@ -352,7 +365,7 @@ export async function init() {
     if (!name) {
       return db.exec(`
         CREATE TABLE subdata (
-          id TEXT UNIQUE ON CONFLICT IGNORE, 
+          id TEXT PRIMARY KEY,
           title TEXT, 
           desc TEXT, 
           tags TEXT, 
