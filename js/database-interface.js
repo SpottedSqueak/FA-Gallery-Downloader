@@ -108,7 +108,7 @@ export function getNextUnsavedContent(name) {
     AND username LIKE '${name}'
   `;
   return db.get(query).then(results => {
-    if (!results.content_name) return db.get(defaultQuery);
+    if (!results?.content_name) return db.get(defaultQuery);
     else return results;
   })
 }

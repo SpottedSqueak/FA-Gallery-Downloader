@@ -19,14 +19,13 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
   let nextPage = ''; // Only valid if in favorites!
   log(`[Data] Searching user ${dirName} for submission links...`, divID);
   logProgress.busy(progressID);
-  while(!stopLoop) {
-    if (stop.now) return logProgress.reset(progressID);
+  while(!stopLoop && !stop.now) {
     let $ =  await getHTML((!nextPage) ? url + currPageCount : nextPage);
     // Check for content
     let newLinks = Array.from($('figcaption a[href^="/view"]'))
       .map((div) => FA_URL_BASE + div.attribs.href);
     if (!newLinks.length) {
-      log(`[Data] Found ${currPageCount} pages of submissions!`, divID);
+      // log(`[Data] Found ${currPageCount} pages of submissions!`, divID);
       break;
     }
     await db.saveLinks(newLinks, isScraps).catch(() => stopLoop = true);
@@ -45,7 +44,7 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
     }
     await waitFor();
   }
-  log(`[Data] ${currLinks} submissions found!`);
+  if (!stop.now) log(`[Data] ${currLinks} submissions found!`);
   logProgress.reset(progressID);
 }
 /**
@@ -81,11 +80,10 @@ const metadataID = 'scrape-metadata';
  */
 export async function scrapeSubmissionInfo(data = null, downloadComments) {
   const links = data || await db.getSubmissionLinks();
-  if (!links.length) return;
+  if (!links.length || stop.now) return logProgress.reset(progressID);
   log(`[Data] Saving data for ${links.length} submissions...`, metadataID);
   let index = 0;
-  while (index < links.length) {
-    if (stop.now) return logProgress.reset(progressID);
+  while (index < links.length && !stop.now) {
     logProgress({transferred: index+1, total: links.length}, progressID);
     let $ = await getHTML(links[index].url);
     // Check if submission still exists
@@ -110,6 +108,6 @@ export async function scrapeSubmissionInfo(data = null, downloadComments) {
     index++;
     if (index % 2) await waitFor(1000);
   }
-  log('[Data] Save complete!');
+  if (!stop.now) log('[Data] Save complete!');
   logProgress.reset(progressID);
 }

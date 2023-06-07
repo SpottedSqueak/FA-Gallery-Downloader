@@ -108,7 +108,6 @@ async function checkDBRepair() {
     logLast(`Database repaired!`);
   } else logLast(`Database OK!`);
 }
-
 async function init() {
   // Init database
   await db.init();
@@ -117,15 +116,18 @@ async function init() {
   // Setup user logging
   initUtils(page);
   // Wait for path decision
+  function passUsername(name = username) {
+    if (name) return page.evaluate(`window.setUsername('${name}')`);
+  }
   await page.exposeFunction('userPath', async ({choice, name, scrapeGallery, scrapeComments, scrapeFavorites }) => {
+    stop.reset();
     if (choice === 'login') {
-      stop.reset();
       if (!username) await handleLogin(browser);
       else await forceNewLogin(browser);
-      await page.evaluate(`window.setUsername('${username}')`);
+      await passUsername(name);
     } else if (choice === 'start-download') {
-      stop.reset();
       if (!username) await handleLogin(browser);
+      await passUsername(name);
       if (name) downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
       else log('[Warn] Need a valid username first...');
     } else if (choice === 'view-gallery')
@@ -135,7 +137,7 @@ async function init() {
       log('Stopping data scraping...');
     }
   });
-  if (await checkIfLoggedIn(page)) await page.evaluate(`window.setUsername('${username}')`);
+  if (await checkIfLoggedIn(page)) await passUsername();
   // Repair DB if needed
   await checkDBRepair();
   // Enable user choice buttons

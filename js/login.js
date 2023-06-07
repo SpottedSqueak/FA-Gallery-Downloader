@@ -54,7 +54,7 @@ async function logInUser() {
   await checkIfLoggedIn();
 }
 export async function forceNewLogin(browser) {
-  queryPage = await browser.pages().then(p => p[0]);
+  let queryPage = await browser.pages().then(p => p[0]);
   // Log previous user out
   const cookies = await queryPage.cookies(FA_URL_BASE);
   await queryPage.deleteCookie(...cookies);
