@@ -66,7 +66,8 @@ export async function handleLogin(newBrowser) {
   browser = browser || newBrowser;
   // Get credentials
   log('Checking logged in status...');
-  if (!await checkIfLoggedIn()) await logInUser();
+  if (!await checkIfLoggedIn()) 
+    await logInUser().catch(() => page = null);
   if(username) {
     log(`User logged-in as: <b>${username}</b>`);
     await setOwnedAccount(username);
