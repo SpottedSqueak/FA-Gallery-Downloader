@@ -13,12 +13,33 @@
     body, html {
       margin: 0 8px;
     }
-    .user-input {
-      margin: 1rem auto;
+    .logged-in-status {
+      display: block;
+      position: absolute;
+      top: 24px;
+      right: 2%;
+    }
+    .logged-in-status span {
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+    .startup-title {
+      border-bottom: 1px solid #000;
+      padding: 16px 16px 16px 0;
+      margin: 0;
+    }
+    .user-input-container, .status-container {
+      display: block;
+      float: left;
+      width: 50%;
+      padding-right: 16px;
+    }
+    .user-choices {
+      margin: 1em auto;
     }
     .status-container {
       position: relative;
-      width: 60%;
+      margin-top: 8px;
     }
     #progress-bars {
       float: right;
@@ -41,29 +62,35 @@
       background: lightgray;
     }
     .warning {
+      font-size: 0.8em;
       color: red;
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h2>🐾FA Gallery Downloader🐾</h2>
-  <form class="user-input" onsubmit="return false">
-    <label for="username">Gallery to download:</label>
-    <input type="text" id="username" placeholder="Enter a username:" />
-    <input type="checkbox" id="scrape-gallery" checked />
-    <label for="scrape-gallery">Gallery</label>
-    <input type="checkbox" id="scrape-comments" checked />
-    <label for="scrape-comments">Comments</label>
-    <input type="checkbox" id="scrape-favorites" />
-    <label for="scrape-favorites">Favorites</label>
-    <span class="warning">(WARNING: This can be a HUGE amount!!)</span>
-  </form>
-  <div class="user-choices">
-    <button id="login" onclick="window.userPath({ choice: this.id })">Login/Switch Accounts</button>
-    <button id="start-download">Start/Continue Gallery Download</button>
-    <button id="view-gallery" onclick="window.userPath({ choice: this.id })">View Gallery</button>
-    <button id="stop-all" onclick="window.userPath({ choice: this.id })" disabled>Stop</button>
+  <div class="logged-in-status">Logged in as: <span>???</span></div>
+  <h2 class="startup-title">🐾FA Gallery Downloader🐾</h2>
+  <div class="user-input-container">
+    <form class="user-input" onsubmit="return false">
+      <p>
+        <label for="username">Gallery to download:</label>
+        <input type="text" id="username" placeholder="Enter a username:" />
+      </p>
+      <input type="checkbox" id="scrape-gallery" checked />
+      <label for="scrape-gallery">Gallery</label>
+      <input type="checkbox" id="scrape-comments" checked />
+      <label for="scrape-comments">Comments</label>
+      <input type="checkbox" id="scrape-favorites" />
+      <label for="scrape-favorites">Favorites</label>
+      <span class="warning">(WARNING: This can be a HUGE amount!!)</span>
+    </form>
+      <div class="user-choices">
+        <button id="login" onclick="window.userPath({ choice: this.id })">Login/Switch Accounts</button>
+        <button id="start-download">Start/Continue Gallery Download</button>
+        <button id="view-gallery" onclick="window.userPath({ choice: this.id })">View Gallery</button>
+        <button id="stop-all" onclick="window.userPath({ choice: this.id })" disabled>Stop</button>
+      </div>
   </div>
   <div class="status-container">
     <div id="progress-bars">
@@ -78,7 +105,10 @@
   </div>
   <script>
     window.setUsername = (name) => {
-      document.querySelector('#username').value = name;
+      if (!name) return;
+      const usernameDiv = document.querySelector('#username');
+      usernameDiv.value = usernameDiv.value || name;
+      document.querySelector('.logged-in-status span').textContent = name;
     }
     const startDownload = document.querySelector('#start-download');
     startDownload.addEventListener('click', (e) => {

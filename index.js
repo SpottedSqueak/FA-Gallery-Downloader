@@ -137,6 +137,9 @@ async function init() {
       log('Stopping data scraping...');
     }
   });
+  page.on('load', () => {
+    passUsername();
+  });
   if (await checkIfLoggedIn(page)) await passUsername();
   // Repair DB if needed
   await checkDBRepair();
