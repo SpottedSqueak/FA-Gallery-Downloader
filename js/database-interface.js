@@ -6,22 +6,39 @@ import process from 'node:process';
 const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
 
-export function getGalleryPage(offset = 0, count = 25, searchTerm = '') {
+export function getGalleryPage(offset = 0, count = 25, query = {}) {
+  let { username, searchTerm, galleryType } = query;
   let searchQuery = '';
+  let galleryQuery = '';
+  let usernameQuery = '';
+
   if (searchTerm) {
     searchTerm = `%${searchTerm.replace(/\s/gi, '%')}%`;
     searchQuery =`
       AND (
         title LIKE '${searchTerm}'
         OR
-        username LIKE '${searchTerm}'
-        OR
         tags LIKE '${searchTerm}'
         OR
         desc LIKE '${searchTerm}'
       )`;
   }
-  const query = `
+  if (galleryType && username) {
+    galleryQuery = `
+      AND url IN (
+        SELECT url
+        FROM favorites f
+        WHERE f.username LIKE '%${username}%'
+      )
+    `;
+  } else {
+    if (username) {
+      usernameQuery = `
+        AND username LIKE '%${username}%'
+        `;
+    }
+  }
+  const dbQuery = `
   SELECT 
     id, 
     title,
@@ -32,10 +49,12 @@ export function getGalleryPage(offset = 0, count = 25, searchTerm = '') {
   FROM subdata
   WHERE id IS NOT NULL
   ${searchQuery}
+  ${usernameQuery}
+  ${galleryQuery}
   ORDER BY id DESC
   LIMIT ${count} OFFSET ${offset}
   `;
-  return db.all(query);
+  return db.all(dbQuery);
 }
 /**
  * Returns all 
@@ -350,7 +369,7 @@ export async function init() {
   })
   .then(upgradeDatabase)
   .catch((e) => {
-    console.log(e);
+    console.error(e);
     process.exit(2);
   });
 }

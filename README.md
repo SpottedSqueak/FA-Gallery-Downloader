@@ -39,7 +39,7 @@ I plan to work on this more when I have time, but I'm a pretty busy guy! At the 
 - [x] Log errors to file (Found under `/fa_gallery_downloader/logs`)
 - [ ] Clean up the interface some (better logging, maybe download animations?)
 - [ ] Export data to JSON/CSV files
-- [x] Add a locally browsable copy of the given FA gallery
+- [x] Add a locally browsable copy of the given FA gallery (includes SEARCH!)
 - [ ] Format description text to BBCode for ease of cross posting (Maybe?)
 - [x] ~~Skip submission link gathering when traversing previously traversed galleries (yes, that makes sense)~~ (Not possible with how FA galleries work)
 

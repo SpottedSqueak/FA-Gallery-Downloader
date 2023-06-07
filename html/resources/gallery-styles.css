@@ -44,7 +44,7 @@ img {
 }
 label {
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1em;
   vertical-align: middle;
 }
 .v-enter-active,
@@ -76,11 +76,22 @@ label {
   padding: 14px 8px;
   justify-content: right;
 }
-#search {
-  width: 400px;
+.gallery-controls__search-container {
+  margin-left: 8px;
+}
+
+.gallery-controls input {
+  width: 200px;
   height: 1.5rem;
-  margin-left: 1rem;
+  margin-left: 1em;
   vertical-align: middle;
+}
+.gallery-controls select {
+  margin-left: 1em;
+}
+.gallery-search-title {
+  margin: 0;
+  text-transform: capitalize;
 }
 .gallery-results-container {
   display: flex;

@@ -11,9 +11,9 @@ let page = null;
 
 export async function initGallery(browser) {
   page = await browser.newPage();
-  await page.exposeFunction('getGalleryPage', async (offset, count, searchTerm) => {
+  await page.exposeFunction('getGalleryPage', async ({ offset, count, query } = {}) => {
     // Get all data for given gallery page using offset
-    const data = await db.getGalleryPage(offset, count, searchTerm);
+    const data = await db.getGalleryPage(offset, count, query);
     return data;
   });
   await page.exposeFunction('getSubmissionPage', async (id) => {
