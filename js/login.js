@@ -58,6 +58,7 @@ export async function forceNewLogin(browser) {
   // Log previous user out
   const cookies = await queryPage.cookies(FA_URL_BASE);
   await queryPage.deleteCookie(...cookies);
+  username = '';
   return handleLogin(browser);
 }
 
