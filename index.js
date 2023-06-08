@@ -11,7 +11,12 @@ import * as pBrowsers from '@puppeteer/browsers';
 import * as cliProgress from 'cli-progress';
 import fs from 'fs-extra';
 import { join } from 'node:path';
-import { hideConsole } from 'node-hide-console-window';
+
+try { // Dynamic import, set to null on failure
+  var hideConsole = (await import('node-hide-console-window')).hideConsole;
+} catch (es) {
+  hideConsole = null;
+}
 
 const startupLink = join(__dirname, './html/startup.html');
 const startupHTML = fs.readFileSync(join(__dirname, './html/startup.html'), 'utf8');
@@ -115,7 +120,11 @@ async function init() {
   // Init database
   await db.init();
   const { page, browser } = await setupBrowser();
-  hideConsole();
+  
+  if (hideConsole) { // Check import was success
+    hideConsole();
+  }
+  
   // Setup user logging
   initUtils(page);
   // Wait for path decision
