@@ -1,6 +1,7 @@
 export default {
   name: 'gallery-controls',
   emits: ['startSearch'],
+  props: ['outsideUsername'],
   template: `
     <div class="gallery-controls">
       <div class="gallery-controls__search-container">
@@ -27,8 +28,12 @@ export default {
       galleryType: '',
     };
   },
-  computed: {
-
+  watch: {
+    outsideUsername(newName, oldName) {
+      this.username = newName;
+      this.galleryType = '';
+      this.startSearch();
+    }
   },
   methods: {
     startSearch() {

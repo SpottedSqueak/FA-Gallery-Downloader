@@ -181,6 +181,7 @@ div.gallery-tile__info {
 }
 .gallery-tile__user span {
   font-weight: bold;
+  cursor: pointer;
 }
 /** Submission Styles **/
 .submission-container {

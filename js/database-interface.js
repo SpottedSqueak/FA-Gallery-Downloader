@@ -295,6 +295,21 @@ export function getAllSubmissionData() {
 export function getAllCompleteSubmissionData() {
   return db.all('SELECT * from subdata WHERE id IS NOT NULL');
 }
+export async function fixFavoritesUsernames() {
+  await db.exec(`
+    CREATE TABLE favTemp (
+      id TEXT UNIQUE ON CONFLICT IGNORE,
+      url TEXT,
+      username TEXT
+    )`);
+  await db.exec(`
+    INSERT INTO favTemp
+    SELECT LOWER(id) AS id, LOWER(username) AS username, url FROM favorites
+  `);
+  await db.exec(`INSERT INTO favorites SELECT * FROM favTemp`);
+  await db.exec(`DELETE FROM favorites WHERE LOWER(id) <> id`);
+  return await db.exec(`DROP TABLE favTemp`);
+}
 /**
  * Used for making future upgrades/updates to the database, to enforce
  * a schema.
@@ -337,6 +352,9 @@ export async function upgradeDatabase() {
       await db.exec('ALTER TABLE subdata ADD COLUMN moved_content INTEGER default 0')
       .catch(() => {/* Column already exists, just continue */});
       version = 5;
+    case 5:
+      await fixFavoritesUsernames();
+      version = 6;
     default:
       await db.exec(`PRAGMA auto_vacuum = INCREMENTAL`);
       await db.exec(`PRAGMA user_version = ${version}`);

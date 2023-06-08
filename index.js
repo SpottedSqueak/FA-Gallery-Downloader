@@ -74,6 +74,7 @@ async function setupBrowser() {
 }
 let inProgress = false;
 async function downloadPath(name = username, scrapeGallery, scrapeComments, scrapeFavorites) {
+  name = name.toLowerCase();
   inProgress = true;
   const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
   const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;

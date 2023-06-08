@@ -14,7 +14,7 @@ export default {
     <transition>
       <div v-show="!submissionData" class="gallery-container">
         <h2 class="gallery-title">🐾FA Gallery Viewer 🐾</h2>
-        <gallery-controls @start-search="startSearch"></gallery-controls>
+        <gallery-controls @start-search="startSearch" :outside-username="outsideUsername"></gallery-controls>
         <div class="gallery-navigation">
           <button class="gallery-prev" :disabled="!offset" @click="previous">Prev</button>
           <h2 class="gallery-search-title">{{galleryTitle}}</h2>
@@ -22,7 +22,7 @@ export default {
         </div>
         <div class="gallery-results-container">
           <template v-for="result in results" :key="result.content_name">
-            <gallery-tile @load-submission="loadSubmission" v-bind="result"></gallery-tile>
+            <gallery-tile @load-submission="loadSubmission" v-bind="result" @search-user="searchUser"></gallery-tile>
           </template>
           <p v-if="!results.length">No results!</p>
         </div>
@@ -44,6 +44,7 @@ export default {
       contentPath: '',
       submissionData: null,
       query: {},
+      outsideUsername: '',
     };
   },
   mounted() {
@@ -115,6 +116,9 @@ export default {
         return;
       }
       this.getResults();
+    },
+    searchUser(username) {
+      this.outsideUsername = username;
     }
   }
 }

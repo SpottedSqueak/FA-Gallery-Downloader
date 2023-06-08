@@ -4,24 +4,26 @@ export default {
   name: 'gallery-tile',
   template: `
     <div class="gallery-tile">
-      <div class="gallery-tile__thumbnail" @click="loadSubmission">
+      <div class="gallery-tile__thumbnail" @click="loadSubmission" :alt="altText" :title="altText">
         <img v-if="isImg" :class="{'too-wide': isTooWide}" :src="computedImgPath" @load="onImgLoad" />
         <div v-else-if="!is_content_saved" class="gallery-tile__thumbnail-other not-downloaded"><span>File not yet downloaded!<br>Type: {{fileExtension}}</span></div>
         <div v-else class="gallery-tile__thumbnail-other file-type"><span>{{fileExtension}}</span></div>
       </div>
       <div class="gallery-tile__info">
-        <div class="gallery-tile__title" @click="loadSubmission">{{title}}</div>
-        <div class="gallery-tile__user">by <span>{{username}}</span></div>
+        <div class="gallery-tile__title" @click="loadSubmission" :alt="altText" :title="altText">{{title}}</div>
+        <div class="gallery-tile__user">by <span @click="searchUser" :alt="userAltText" :title="userAltText">{{username}}</span></div>
         <div class="gallery-tile__date" :title="date_uploaded" :alt="date_uploaded">Uploaded: {{relativeDate}}</div>
       </div>
     </div>
   `,
   props: ['id', 'title', 'username', 'content_name', 'date_uploaded', 'is_content_saved'],
-  emits: ['loadSubmission'],
+  emits: ['loadSubmission', 'searchUser'],
   data() {
     return {
       contentPath: '',
       isTooWide: false,
+      altText: 'View this submission!',
+      userAltText: 'Search for this user!',
     };
   },
   beforeMount() {
@@ -55,6 +57,9 @@ export default {
     },
     loadSubmission() {
       this.$emit('loadSubmission', this.id);
+    },
+    searchUser() {
+      this.$emit('searchUser', this.username);
     }
   },
 }
