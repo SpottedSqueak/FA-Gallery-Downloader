@@ -18,7 +18,7 @@ try { // Dynamic import, set to null on failure
   hideConsole = null;
 }
 
-const startupLink = join(`file://${__dirname}`, './html/startup.html');
+const startupLink = join('file:', __dirname, './html/startup.html');
 const startupHTML = fs.readFileSync(join(__dirname, './html/startup.html'), 'utf8');
 
 /**
