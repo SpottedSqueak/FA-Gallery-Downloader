@@ -5,7 +5,8 @@ export default {
   template: `
     <div class="gallery-tile">
       <div class="gallery-tile__thumbnail" @click="loadSubmission" :alt="altText" :title="altText">
-        <img v-if="isImg" :class="{'too-wide': isTooWide}" :src="computedImgPath" @load="onImgLoad" />
+        <div v-if="error" class="gallery-tile__thumbnail-other">⚠ ERROR! ⚠<br>Possible<br>corrupt file!</div>
+        <img v-else-if="isImg" :class="{'too-wide': isTooWide}" :src="computedImgPath" @load="onImgLoad" @error="error = true"/>
         <div v-else-if="!is_content_saved" class="gallery-tile__thumbnail-other not-downloaded"><span>File not yet downloaded!<br>Type: {{fileExtension}}</span></div>
         <div v-else class="gallery-tile__thumbnail-other file-type"><span>{{fileExtension}}</span></div>
       </div>
@@ -24,10 +25,12 @@ export default {
       isTooWide: false,
       altText: 'View this submission!',
       userAltText: 'Search for this user!',
+      error: false,
     };
   },
   beforeMount() {
    this.getContentPath();
+   this.error = false;
   },
   computed: {
     isImg() {

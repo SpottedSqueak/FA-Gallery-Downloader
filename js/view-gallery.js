@@ -11,7 +11,10 @@ const contentPath = resolve('file://', '../fa_gallery_downloader/downloaded_cont
 let page = null;
 
 export async function initGallery(browser) {
+  if (page) return;
   page = await browser.newPage();
+  await page.bringToFront();
+  page.on('close', () => page = null);
   await page.exposeFunction('getGalleryPage', async ({ offset, count, query } = {}) => {
     // Get all data for given gallery page using offset
     const data = await db.getGalleryPage(offset, count, query);

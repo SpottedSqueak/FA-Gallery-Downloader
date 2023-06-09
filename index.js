@@ -1,4 +1,4 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
@@ -14,7 +14,6 @@ import { join } from 'node:path';
 import { hideConsole } from 'node-hide-console-window';
 
 const startupLink = join(__dirname, './html/startup.html');
-const startupHTML = fs.readFileSync(join(__dirname, './html/startup.html'), 'utf8');
 
 /**
  * Find the path to a browser executable to use for Puppeteer
@@ -68,29 +67,31 @@ async function setupBrowser() {
     process.exit(1);
   });
   // Display startup page
-  //await page.setContent(startupHTML);
-  await page.goto(startupLink);
   return { browser, page };
 }
 let inProgress = false;
-async function downloadPath(name = username, scrapeGallery, scrapeComments, scrapeFavorites) {
-  name = name.toLowerCase();
-  inProgress = true;
-  const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
-  const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;
-  const FA_FAVORITES_URL = `${FA_URL_BASE}/favorites/${name}/`;
+async function downloadPath(name = username, scrapeGallery = true, scrapeComments = true, scrapeFavorites) {
+  if (inProgress) return log('[Data] Program already running!');
+  if (name) {
+    inProgress = true;
+    const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
+    const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;
+    const FA_FAVORITES_URL = `${FA_URL_BASE}/favorites/${name}/`;
 
-  // Check if valid username
-  const $ = await getHTML(FA_USER_BASE + name);
-  if (/system.error/i.test($('title').text())) {
-    return log(`[Warn] Invalid username: ${name}`);
+    // Check if valid username
+    const $ = await getHTML(FA_USER_BASE + name);
+    if (/system.error/i.test($('title').text())) {
+      return log(`[Warn] Invalid username: ${name}`);
+    }
+    // Scrape data from gallery pages
+    if (scrapeGallery) {
+      await getSubmissionLinks({ url: FA_GALLERY_URL });
+      await getSubmissionLinks({ url: FA_SCRAPS_URL, isScraps: true });
+    }
+    if (scrapeFavorites) await getSubmissionLinks({ url: FA_FAVORITES_URL, isFavorites: true, username: name });
+  } else {
+    log('[Data] Continuing previous download...');
   }
-  // Scrape data from gallery pages
-  if (scrapeGallery) {
-    await getSubmissionLinks({ url: FA_GALLERY_URL });
-    await getSubmissionLinks({ url: FA_SCRAPS_URL, isScraps: true });
-  }
-  if (scrapeFavorites) await getSubmissionLinks({ url: FA_FAVORITES_URL, isFavorites: true, username: name });
   // Scrape data from collected submission pages
   Promise.all([
     scrapeSubmissionInfo(null, scrapeComments),
@@ -129,19 +130,24 @@ async function init() {
     } else if (choice === 'start-download') {
       if (!username) await handleLogin(browser);
       await passUsername();
-      if (name) downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
-      else log('[Warn] Need a valid username first...');
-    } else if (choice === 'view-gallery')
+      downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
+    } else if (choice === 'view-gallery') {
+      log(`[Data] Opening gallery viewer...`);
       initGallery(browser);
-    else if (choice === 'stop-all') {
+    } else if (choice === 'stop-all') {
       stop.now = true;
       log('Stopping data scraping...');
     }
   });
-  page.on('load', () => {
-    passUsername();
-    passSearchName(username);
+  page.on('domcontentloaded', async () => {
+    await passUsername();
+    let accounts = await db.getOwnedAccounts();
+    const data = {
+      accounts: accounts.map(a => a.username),
+    };
+    await passStartupInfo(data);
   });
+  await page.goto(startupLink);
   if (await checkIfLoggedIn(page)) await passUsername();
   // Repair DB if needed
   await checkDBRepair();

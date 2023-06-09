@@ -23,6 +23,7 @@ a:hover {
   text-decoration: underline;
 }
 button {
+  position: relative;
   border: 1px solid #69697d;
   background: #434b5b;
   padding: 8px 1.5rem;
@@ -37,6 +38,9 @@ button:disabled {
 }
 button:hover:not(:disabled) {
   background: var(--component-hover-color);
+}
+button:active {
+  top: 1px;
 }
 img {
   max-width: 100%;
@@ -309,7 +313,7 @@ div.gallery-tile__info {
   grid-template-areas:
     "l tr"
     "l br";
-  grid-column-gap: 16px;
+  column-gap: 16px;
 }
 .comment-icon {
   grid-area: l;

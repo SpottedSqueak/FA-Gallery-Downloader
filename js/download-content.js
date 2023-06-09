@@ -4,7 +4,7 @@ import * as db from './database-interface.js';
 import fs from 'fs-extra';
 import got from 'got';
 
-const progressID = 'file-progress-bar';
+const progressID = 'file';
 const downloadDir = './fa_gallery_downloader/downloaded_content';
 
 /**
@@ -21,7 +21,7 @@ function downloadSetup(content_url, content_name, username) {
     const fStream = fs.createWriteStream(`${downloadDir}/${username}/${content_name}`);
     dlStream.on("downloadProgress", ({ transferred, total, percent }) => {
       const percentage = Math.round(percent * 100);
-      logProgress({ transferred, total, percentage }, progressID);
+      logProgress({ transferred, total, percentage, filename: content_name }, progressID);
     })
     .on("error", (error) => {
       logProgress.reset(progressID);

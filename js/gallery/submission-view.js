@@ -6,10 +6,11 @@ export default {
     <div class="submission-view">
       <div class="submission-container">
         <div class="submission-hero">
-          <img v-if="isImg" :src="computedContentPath" @click="openInNewWindow" :alt="altText" :title="altText"/>
-          <object v-else-if="isPDF" class="pdf-embed" :data="computedContentPath" type="application/pdf"></object>
-          <object v-else-if="isTxt" class="pdf-embed txt" :data="computedContentPath" type="text/plain"></object>
-          <audio v-else-if="isMusic" class="music-embed" controls :src="computedContentPath"></audio>
+          <div v-if="error" class="download-link" @click="downloadContent">File possibly corrupted!<br>Redownload?</div>
+          <img v-else-if="isImg" :src="computedContentPath" @click="openInNewWindow" :alt="altText" :title="altText" @error="error = true" />
+          <object v-else-if="isPDF" class="pdf-embed" :data="computedContentPath" type="application/pdf" @error="error = true"></object>
+          <object v-else-if="isTxt" class="pdf-embed txt" :data="computedContentPath" type="text/plain" @error="error = true"></object>
+          <audio v-else-if="isMusic" class="music-embed" controls :src="computedContentPath" @error="error = true"></audio>
           <div v-else class="download-link" @click="downloadContent">Content not downloaded!<br>Download now?</div>
         </div>
         <div class="submission-metadata">
@@ -59,10 +60,16 @@ export default {
     return {
       contentPath: '',
       altText: 'Click to open in a new tab!',
+      error: false,
     };
   },
   beforeMount() {
    this.getContentPath();
+  },
+  watch: {
+    submission() {
+      this.error = false;
+    }
   },
   computed: {
     isImg() {
@@ -143,7 +150,7 @@ export default {
       window.open(this.computedContentPath, '_blank');
     },
     fixIcon(e) {
-      e.target.src = './resources/_default.gif'
+      e.target.src = '../html/resources/_default.gif';
     }
   },
 }

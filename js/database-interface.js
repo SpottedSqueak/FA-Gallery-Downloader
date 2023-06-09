@@ -19,14 +19,16 @@ export function getGalleryPage(offset = 0, count = 25, query = {}) {
   let usernameQuery = '';
 
   if (searchTerm) {
-    searchTerm = `%${searchTerm.replace(/\s/gi, '%')}%`;
+    searchTerm = `${searchTerm.replace(/\s/gi, '%')}`;
     searchQuery =`
       AND (
-        title LIKE '${searchTerm}'
+        title LIKE '%${searchTerm}%'
         OR
-        tags LIKE '${searchTerm}'
+        tags LIKE '%${searchTerm}%'
         OR
-        desc LIKE '${searchTerm}'
+        desc LIKE '%${searchTerm}%'
+        OR 
+        content_name LIKE '%${searchTerm}'
       )`;
   }
   if (galleryType && username) {

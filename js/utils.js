@@ -67,28 +67,12 @@ export async function waitFor(t = 1000) {
  * @param {Object} data 
  * @param {String} id 
  */
-export async function logProgress(data = {}, id='file-progress-bar') {
-  const { transferred, total } = data;
+export async function logProgress(progress = {}, bar='file') {
+  const { transferred: value, total: max, filename } = progress;
+  let reset = !max;
   if (!page?.isClosed()) {
-    if (total) {
-      await page.evaluate((transferred = 0, total = 0, id) => {
-        const progress = document.getElementById(id);
-        if (transferred && transferred >= total) {
-          setTimeout(() => {
-            progress.value = 0;
-            progress.max = 0;
-          }, 1000);
-        }
-        progress.setAttribute('value', transferred);
-        progress.max = total;
-      }, transferred, total, id);
-    } else {
-      // Set progress bar as "Busy"
-      await page.evaluate((id) => {
-        const progress = document.getElementById(id);
-        progress.removeAttribute('value');
-      }, id);
-    }
+    const data = {value, max, reset, bar, filename };
+    await page.evaluate(`window.logProgress?.(${JSON.stringify(data)})`);
   }
 }
 logProgress.reset = (id) => {
@@ -102,9 +86,9 @@ logProgress.busy = (id) => {
  * @param {String} text 
  */
 export async function logLast(text, id) {
-  const divClass = id ? `.${id}`: 'p:last-child';
   if (!page?.isClosed()) {
-    page.evaluate(`document.querySelector('#status ${divClass}').innerHTML = '${text}'`).catch(() => log(text, id));
+    const data = { text, id, replaceLast: true };
+    page.evaluate(`window.logMsg?.(${JSON.stringify(data)})`);
   }
   console.log(text);
 }
@@ -114,7 +98,7 @@ export async function logLast(text, id) {
  */
 export async function log(text, id, noConsole) {
   if (!page?.isClosed()) {
-    page.evaluate(`document.querySelector('#status').insertAdjacentHTML('afterbegin', '<p class="${id}">${text}</p>')`);
+    page.evaluate(`window.logMsg?.(${JSON.stringify({ text, id })})`);
   }
   if (!noConsole) console.log(text);
 }
@@ -130,10 +114,13 @@ export function getHTML(url) {
   }).catch((e) => console.log(e));
 }
 export function passUsername() {
-  return page.evaluate(`window?.setUsername('${username}')`);
+  return page.evaluate(`window.setUsername?.('${username}')`);
 }
 export function passSearchName(name) {
-  if (name) return page.evaluate(`window?.setSearchName('${name}')`);
+  return page.evaluate(`window.setSearchName?.('${name}')`);
+}
+export function passStartupInfo(data) {
+  return page.evaluate(`window.setPageInfo?.(${JSON.stringify(data)})`);
 }
 /**
  * Binds the given Page object for future log messages.

@@ -29,7 +29,7 @@ export default {
     };
   },
   watch: {
-    outsideUsername(newName, oldName) {
+    outsideUsername(newName) {
       this.username = newName;
       this.galleryType = '';
       this.startSearch();

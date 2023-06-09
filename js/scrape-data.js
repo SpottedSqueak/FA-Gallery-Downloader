@@ -3,7 +3,7 @@ import * as db from './database-interface.js';
 import { log, logProgress, waitFor, getHTML, stop } from './utils.js';
 
 const scrapeID = 'scrape-div';
-const progressID = 'data-progress-bar';
+const progressID = 'data';
 
 /**
  * Walks the user's gallery in order to gather all submission links for future download.
