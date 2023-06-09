@@ -22,7 +22,7 @@ const startupLink = join('file://', __dirname, './html/startup.html');
  */
 async function getBrowserPath() {
   const product = 'chrome';
-  let chromePath = await getPromise(getChromiumPath).catch(getPromise(getChromePath)).catch(() => '');
+  let chromePath = await getPromise(getChromiumPath).catch(() => getPromise(getChromePath)).catch(() => '');
   if (!chromePath) {
     // We'll have to download one...
     const os = pBrowsers.detectBrowserPlatform();
