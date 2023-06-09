@@ -134,7 +134,7 @@ export async function log(text, id, noConsole) {
  * @param {String} url 
  * @returns Loaded Cheerio Object
  */
-export function getHTML(url, sendHeaders) {
+export function getHTML(url, sendHeaders = true) {
   const headers = sendHeaders ? faRequestHeaders : {};
   return got(url, headers).text().then((result) => {
     console.log(`Loaded: ${url}`);
