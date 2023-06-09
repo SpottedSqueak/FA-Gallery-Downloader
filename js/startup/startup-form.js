@@ -61,7 +61,7 @@ export default {
       return this.isLoggedIn ? 'Switch Accounts': 'Login';
     },
     downloadText() {
-      return (this.username) ? 'Download Gallery' : 'Continue Previous Download';
+      return (this.username) ? 'Download User Gallery' : 'Continue Previous Download';
     }
   },
   methods: {

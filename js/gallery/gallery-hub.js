@@ -119,6 +119,6 @@ export default {
     },
     searchUser(username) {
       this.outsideUsername = username;
-    }
+    },
   }
 }

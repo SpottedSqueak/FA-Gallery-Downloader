@@ -1,6 +1,6 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo, getVersion, hideConsole } from './js/utils.js';
 import * as db from './js/database-interface.js';
-import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE } from './js/constants.js';
+import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE, BROWSER_DIR } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { cleanupFileStructure, initDownloads } from './js/download-content.js';
@@ -11,9 +11,9 @@ import * as pBrowsers from '@puppeteer/browsers';
 import * as cliProgress from 'cli-progress';
 import fs from 'fs-extra';
 import { join } from 'node:path';
-import { hideConsole } from 'node-hide-console-window';
+import open from 'open';
 
-const startupLink = join(__dirname, './html/startup.html');
+const startupLink = join('file://', __dirname, './html/startup.html');
 
 /**
  * Find the path to a browser executable to use for Puppeteer
@@ -43,7 +43,6 @@ async function getBrowserPath() {
   return { chromePath, product };
 }
 
-const BROWSER_DIR = './fa_gallery_downloader/browser_profiles/';
 /**
  * Sets up the browser for use with Puppeteer
  * @returns 
@@ -116,11 +115,12 @@ async function init() {
   // Init database
   await db.init();
   const { page, browser } = await setupBrowser();
-  hideConsole();
   // Setup user logging
-  initUtils(page);
+  await initUtils(page);
+  // Hide console on Windows
+  hideConsole();
   // Wait for path decision
-  await page.exposeFunction('userPath', async ({choice, name, scrapeGallery, scrapeComments, scrapeFavorites }) => {
+  await page.exposeFunction('userPath', async ({ choice, name, scrapeGallery, scrapeComments, scrapeFavorites, url }) => {
     stop.reset();
     if (choice === 'login') {
       if (!username) await handleLogin(browser);
@@ -137,6 +137,8 @@ async function init() {
     } else if (choice === 'stop-all') {
       stop.now = true;
       log('Stopping data scraping...');
+    } else if(choice === 'open') {
+      if (url) open(url);
     }
   });
   page.on('domcontentloaded', async () => {
@@ -144,7 +146,15 @@ async function init() {
     let accounts = await db.getOwnedAccounts();
     const data = {
       accounts: accounts.map(a => a.username),
+      current: getVersion(),
     };
+    let $ = await getHTML('https://github.com/SpottedSqueak/FA-Gallery-Downloader/commits/main');
+    if ($) {
+      const latest = $('.js-commits-list-item a.markdown-title').filter(function () {
+        return /v?\d+.\d+.\d+/gi.test($(this).text());
+      }).first().text();
+      data.latest = latest;
+    }
     await passStartupInfo(data);
   });
   await page.goto(startupLink);

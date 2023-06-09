@@ -4,6 +4,7 @@ import { join, resolve } from 'path';
 import { scrapeComments } from './scrape-data.js';
 import { downloadSpecificContent } from './download-content.js';
 import { handleLogin, username } from './login.js';
+import open from 'open';
 
 const galleryLink = join('file://', __dirname, './html/gallery.html');
 const contentPath = resolve('file://', '../fa_gallery_downloader/downloaded_content' );
@@ -36,6 +37,9 @@ export async function initGallery(browser) {
     if (!username) return false;
     const isComplete = await downloadSpecificContent(contentInfo);
     return !!isComplete;
+  });
+  await page.exposeFunction('openUrl', (url) => {
+    if (url) open(url);
   });
   await page.exposeFunction('getContentPath', () => contentPath);
   await page.goto(galleryLink);

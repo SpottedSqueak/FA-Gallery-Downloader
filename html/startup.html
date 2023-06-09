@@ -19,32 +19,5 @@
     }
   </script>
   <script type="module" src="../js/startup/app.js"></script>
-  
-  <script>
-    if (false) {
-      window.setSearchName = (name) => {
-        if (!name) return;
-        const usernameDiv = document.querySelector('#username');
-        usernameDiv.value = usernameDiv.value || name;
-      }
-      window.setUsername = (name) => {
-        document.querySelector('.logged-in-status span').textContent = name || '???';
-      }
-      const startDownload = document.querySelector('#start-download');
-      startDownload.addEventListener('click', (e) => {
-        const scrapeGallery = document.querySelector('#scrape-gallery').checked;
-        const scrapeComments = document.querySelector('#scrape-comments').checked;
-        const scrapeFavorites = document.querySelector('#scrape-favorites').checked;
-        const username = document.querySelector('#username').value.trim();
-        window.userPath({ choice: e.target.id, name: username, scrapeComments, scrapeFavorites, scrapeGallery });
-        document.querySelector('#stop-all').disabled = false;
-      });
-      document.querySelector('.user-input').addEventListener('submit', (e) => {
-        startDownload.click();
-      });
-      // Initial values
-      window.scrapeComments = true;
-    }
-  </script>
 </body>
 </html>

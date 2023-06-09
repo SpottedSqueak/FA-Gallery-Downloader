@@ -30,18 +30,21 @@ It supports resuming, as it can take upwards of half an hour to fully download l
 I plan to work on this more when I have time, but I'm a pretty busy guy! At the very least, the below #ToDo of adding in locally browseable files would be ideal.
 
 
-## #ToDo
+## #DONE
 
-- [x] Hide console
+- [x] Hide console (Only on Windows!)
 - [x] Allow downloads from other user's galleries (still requires login)
 - [x] Allow downloads of submission comments as well (not user icons though)
 - [x] Downloads a valid version of Chromium if none exist
 - [x] Log errors to file (Found under `/fa_gallery_downloader/logs`)
-- [ ] Clean up the interface some (better logging, maybe download animations?)
-- [ ] Export data to JSON/CSV files
+- [x] Clean up the interface some (better logging, download animations/progress bars)
 - [x] Add a locally browsable copy of the given FA gallery (includes SEARCH!)
-- [ ] Format description text to BBCode for ease of cross posting (Maybe?)
 - [x] ~~Skip submission link gathering when traversing previously traversed galleries (yes, that makes sense)~~ (Not possible with how FA galleries work)
+## #TODO
+
+- [ ] Fix comic navigation so you can move between them inside of the gallery viewer
+- [ ] Format description text to BBCode for ease of cross posting (Maybe?)
+- [ ] Export data to JSON/CSV files (Possible Postbirb+ integration?)
 
 
 Check out my stuff on FA if you'd like!

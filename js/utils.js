@@ -5,7 +5,12 @@ import { dirname, join, } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
 import util from 'util';
-import { exitCode, default as process } from 'node:process';
+import { exitCode, default as process, platform } from 'node:process';
+
+export const isWindows = platform === 'win32';
+export const isMac = platform === 'darwin';
+
+export let hideConsole = () => {};
 
 export const stop = {
   should: false,
@@ -19,16 +24,24 @@ export const stop = {
     this.should = false;
   }
 };
+
 // Get the main folder directory name
 export const __dirname = join(dirname(fileURLToPath(import.meta.url)), '../');
 // Page used to display messages to user
 let page = null;
+let version = '';
 
+export function getVersion() {
+  if (!version) {
+    version = JSON.parse(fs.readFileSync(join(__dirname, './package.json'), 'utf8'))?.version;
+  }
+  return version;
+}
 // Create debug log
 const logDir ='./fa_gallery_downloader/logs';
 const logFileName = join(logDir, `debug-${Date.now()}.log`);
 
-function setupLogger() {
+function setup() {
   fs.ensureFileSync(logFileName);
   const logFile = fs.createWriteStream(logFileName, { flags : 'w' });
   const hooks = ['log', 'error', 'info', 'warn', 'debug'];
@@ -126,8 +139,11 @@ export function passStartupInfo(data) {
  * Binds the given Page object for future log messages.
  * @param {Puppeteer.Page} newPage 
  */
-export function init(newPage) {
+export async function init(newPage) {
   page = newPage;
+  if (isWindows) {
+    hideConsole = await import('node-hide-console-window').then((hc) => hc.hideConsole);
+  }
 }
 
-setupLogger();
+setup();

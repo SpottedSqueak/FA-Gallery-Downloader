@@ -147,9 +147,6 @@ div[class^="gallery-tile__thumbnail"] {
 .gallery-tile__thumbnail-other.filetype {
   font-size: 2.2em;
 }
-.gallery-tile__thumbnail-other.not-downloaded {
-  padding-top: 1.5em;
-}
 .gallery-tile__thumbnail {
   display: flex;
   justify-content: center;

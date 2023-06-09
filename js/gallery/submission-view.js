@@ -3,11 +3,11 @@ import getRelativeTime from './relative-time.js';
 export default {
   name: 'submission-view',
   template: `
-    <div class="submission-view">
+    <div class="submission-view" @click.prevent="possibleOpen">
       <div class="submission-container">
         <div class="submission-hero">
           <div v-if="error" class="download-link" @click="downloadContent">File possibly corrupted!<br>Redownload?</div>
-          <img v-else-if="isImg" :src="computedContentPath" @click="openInNewWindow" :alt="altText" :title="altText" @error="error = true" />
+          <img v-else-if="isImg" :src="computedContentPath" @click.self="openInNewWindow" :alt="altText" :title="altText" @error="error = true" />
           <object v-else-if="isPDF" class="pdf-embed" :data="computedContentPath" type="application/pdf" @error="error = true"></object>
           <object v-else-if="isTxt" class="pdf-embed txt" :data="computedContentPath" type="text/plain" @error="error = true"></object>
           <audio v-else-if="isMusic" class="music-embed" controls :src="computedContentPath" @error="error = true"></audio>
@@ -15,7 +15,7 @@ export default {
         </div>
         <div class="submission-metadata">
           <button class="close-btn" @click="close">✖ Close</button>
-          <button class="full-size-btn" :disabled="!submission.is_content_saved" @click="openInNewWindow">View Full Size</button>
+          <button class="full-size-btn" :disabled="!submission.is_content_saved" @click.self="openInNewWindow">View Full Size</button>
           <h3>Tags</h3>
           <ul class="submission-metadata__tags">
             <li v-for="tag in cleanTags">
@@ -129,7 +129,6 @@ export default {
     },
     getCleanDesc(desc = '') {
       return desc
-        .replace(/href=/gi, 'target="_blank" href=')
         .replace(/"\/\//gi, '"https://')
         .replace(/"\/user/gi, '"https://www.furaffinity.net/user');
     },
@@ -151,6 +150,10 @@ export default {
     },
     fixIcon(e) {
       e.target.src = '../html/resources/_default.gif';
+    },
+    possibleOpen(e) {
+      const url = e.target.closest('a')?.href;
+      if (url) window.openUrl?.(url);
     }
   },
 }

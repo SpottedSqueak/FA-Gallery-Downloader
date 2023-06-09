@@ -97,6 +97,12 @@ label + progress {
   position: relative;
   grid-area: t;
 }
+.startup-header h2 span {
+  font-size: 12px;
+  position: absolute;
+  bottom: -5px;
+  left: 213px;
+}
 .user-input-container {
   grid-area: bl;
   padding-left: 8px;
@@ -198,7 +204,26 @@ label + progress {
 #status p:nth-child(odd) {
   background: #d8d8d825;
 }
+
 .warning {
   font-size: 0.8em;
-  color: red;
+  color: red !important;
+}
+
+.version {
+  position: absolute;
+  bottom: -5px;
+  right: 0;
+  grid-area: br;
+  margin-right: 10%;
+  text-align: right;
+  font-size: smaller;
+}
+.version span,
+.version a,
+.version b {
+  vertical-align: baseline;
+}
+.has-update {
+  color: red !important;
 }
