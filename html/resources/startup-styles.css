@@ -85,10 +85,11 @@ label + progress {
   height: 96vh;
   margin: 2vh auto 0 auto;
   grid-template-columns: 50% 1fr;
-  grid-template-rows: 50px 1fr;
+  grid-template-rows: 50px 1fr 50px;
   grid-template-areas: 
     "t t"
-    "bl br";
+    "bl br"
+    "brl brr";
   row-gap: 24px;
   column-gap: 24px;
   justify-items: stretch;
@@ -211,13 +212,11 @@ label + progress {
 }
 
 .version {
-  position: absolute;
-  bottom: -5px;
-  right: 0;
-  grid-area: br;
-  margin-right: 10%;
+  width: 90%;
+  grid-area: brr;
   text-align: right;
   font-size: smaller;
+  margin-top: -17px;
 }
 .version span,
 .version a,

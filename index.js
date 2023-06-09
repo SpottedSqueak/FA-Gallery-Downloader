@@ -1,20 +1,26 @@
 import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo, getVersion, hideConsole, getPromise } from './js/utils.js';
 import * as db from './js/database-interface.js';
-import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE, BROWSER_DIR } from './js/constants.js';
+import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE, BROWSER_DIR, IGNORE_DEFAULT_PARAMS } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { cleanupFileStructure, initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
 import { getChromePath, getChromiumPath } from 'browser-paths';
-import puppeteer from 'puppeteer-core';
-import * as pBrowsers from '@puppeteer/browsers';
 import * as cliProgress from 'cli-progress';
 import fs from 'fs-extra';
 import path from 'node:path';
 import { join } from 'node:path';
 import open from 'open';
+import puppeteer from 'puppeteer-extra';
+import * as pBrowsers from '@puppeteer/browsers';
+import adBlocker from 'puppeteer-extra-plugin-adblocker';
+import stealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 const startupLink = join('file://', __dirname, './html/startup.html');
+
+// Puppeteer setup
+puppeteer.use(adBlocker({ blockTrackers: true }));
+puppeteer.use(stealthPlugin());
 
 /**
  * Find the path to a browser executable to use for Puppeteer
@@ -27,7 +33,7 @@ async function getBrowserPath() {
     // We'll have to download one...
     const os = pBrowsers.detectBrowserPlatform();
     const browser = pBrowsers.Browser.CHROME;
-    const buildId = await pBrowsers.resolveBuildId(browser, os, pBrowsers.ChromeReleaseChannel.CANARY);
+    const buildId = await pBrowsers.resolveBuildId(browser, os, pBrowsers.ChromeReleaseChannel.STABLE);
     const cacheDir = path.resolve('./fa_gallery_downloader/downloaded_browser');
     chromePath = pBrowsers.computeExecutablePath({ browser, buildId, cacheDir});
     if (!fs.existsSync(chromePath)) {
@@ -59,6 +65,7 @@ async function setupBrowser() {
     args: DEFAULT_BROWSER_PARAMS,
     userDataDir: BROWSER_DIR + product,
     defaultViewport: null,
+    ignoreDefaultArgs: IGNORE_DEFAULT_PARAMS,
   };
   fs.ensureDirSync(BROWSER_DIR + product);
   const browser = await puppeteer.launch(opts);
