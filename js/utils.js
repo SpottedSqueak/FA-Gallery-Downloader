@@ -40,13 +40,13 @@ export function getVersion() {
 
 /**
  * Creates a Promise from a non-async function. Useful for error catching
- * when the result doesn't fully matter.
+ * outside of try/catch blocks.
  * 
  * @param {Function} method 
  * @returns 
  */
 export function getPromise(method) {
-  return new Promise(method).catch((e) => {/*console.warn(e)*/});
+  return new Promise(method);
 }
 // Create debug log
 const logDir ='./fa_gallery_downloader/logs';
@@ -135,7 +135,7 @@ export function getHTML(url) {
   return got(url, faRequestHeaders).text().then((result) => {
     console.log(`Loaded: ${url}`);
     return cheerio.load(result);
-  }).catch((e) => console.log(e));
+  }).catch((e) => console.error(e));
 }
 export function passUsername() {
   return page.evaluate(`window.setUsername?.('${username}')`);

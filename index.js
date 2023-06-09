@@ -10,6 +10,7 @@ import puppeteer from 'puppeteer-core';
 import * as pBrowsers from '@puppeteer/browsers';
 import * as cliProgress from 'cli-progress';
 import fs from 'fs-extra';
+import path from 'node:path';
 import { join } from 'node:path';
 import open from 'open';
 
@@ -22,24 +23,26 @@ const startupLink = join('file://', __dirname, './html/startup.html');
  */
 async function getBrowserPath() {
   const product = 'chrome';
-  let chromePath = await getPromise(getChromiumPath) || await getPromise(getChromePath);
+  let chromePath = await getPromise(getChromiumPath).catch(getPromise(getChromePath)).catch(() => '');
   if (!chromePath) {
     // We'll have to download one...
-    console.log('[Warn] No compatible browser found! Downloading one...');
     const os = pBrowsers.detectBrowserPlatform();
     const browser = pBrowsers.Browser.CHROME;
     const buildId = await pBrowsers.resolveBuildId(browser, os, pBrowsers.ChromeReleaseChannel.CANARY);
-    const cacheDir = join(__dirname, './fa_gallery_downloader/downloaded_browser');
-    const dlBar = new cliProgress.SingleBar({
-      format: 'Downloading compatible browser... | {bar} | {percentage}% | {value}/{total}',
-    }, cliProgress.Presets.legacy);
-    dlBar.start(100, 0);
-    const downloadProgressCallback = (dl, total) => { 
-      dlBar.update(Math.floor(dl/total * 100));
-    };
-    await pBrowsers.install({ browser, buildId, cacheDir, downloadProgressCallback });
+    const cacheDir = path.resolve('./fa_gallery_downloader/downloaded_browser');
     chromePath = pBrowsers.computeExecutablePath({ browser, buildId, cacheDir});
-    dlBar.stop();
+    if (!fs.existsSync(chromePath)) {
+      console.log('[Warn] No compatible browser found!');
+      const dlBar = new cliProgress.SingleBar({
+        format: 'Downloading compatible browser... | {bar} | {percentage}% | {value}/{total}',
+      }, cliProgress.Presets.legacy);
+      dlBar.start(100, 0);
+      const downloadProgressCallback = (dl, total) => { 
+        dlBar.update(Math.floor(dl/total * 100));
+      };
+      await pBrowsers.install({ browser, buildId, cacheDir, downloadProgressCallback });
+      dlBar.stop();
+    }
   }
   return { chromePath, product };
 }

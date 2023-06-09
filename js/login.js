@@ -2,7 +2,7 @@ import { FA_URL_BASE, FA_LOGIN } from "./constants.js";
 import { setOwnedAccount } from "./database-interface.js";
 import { getHTML, log, logLast } from "./utils.js";
 
-export let faRequestHeaders = null;
+export let faRequestHeaders = {};
 export let username = '';
 let browser = null;
 let page = null;
