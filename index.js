@@ -16,7 +16,6 @@ import open from 'open';
 
 const startupLink = join('file://', __dirname, './html/startup.html');
 
-
 /**
  * Find the path to a browser executable to use for Puppeteer
  * @returns 
@@ -152,7 +151,7 @@ async function init() {
       accounts: accounts.map(a => a.username),
       current: getVersion(),
     };
-    let $ = await getHTML('https://github.com/SpottedSqueak/FA-Gallery-Downloader/commits/main');
+    let $ = await getHTML('https://github.com/SpottedSqueak/FA-Gallery-Downloader/commits/main', false);
     if ($) {
       const latest = $('.js-commits-list-item a.markdown-title').filter(function () {
         return /v?\d+.\d+.\d+/gi.test($(this).text());

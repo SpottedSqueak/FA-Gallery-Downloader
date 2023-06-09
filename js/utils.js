@@ -46,7 +46,10 @@ export function getVersion() {
  * @returns 
  */
 export function getPromise(method) {
-  return new Promise(method);
+  return new Promise((resolve, reject) => {
+    const results = method();
+    (results) ? resolve(results) : reject();
+  });
 }
 // Create debug log
 const logDir ='./fa_gallery_downloader/logs';
@@ -131,8 +134,9 @@ export async function log(text, id, noConsole) {
  * @param {String} url 
  * @returns Loaded Cheerio Object
  */
-export function getHTML(url) {
-  return got(url, faRequestHeaders).text().then((result) => {
+export function getHTML(url, sendHeaders) {
+  const headers = sendHeaders ? faRequestHeaders : {};
+  return got(url, headers).text().then((result) => {
     console.log(`Loaded: ${url}`);
     return cheerio.load(result);
   }).catch((e) => console.error(e));
