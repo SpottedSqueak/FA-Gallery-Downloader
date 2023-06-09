@@ -37,6 +37,17 @@ export function getVersion() {
   }
   return version;
 }
+
+/**
+ * Creates a Promise from a non-async function. Useful for error catching
+ * when the result doesn't fully matter.
+ * 
+ * @param {Function} method 
+ * @returns 
+ */
+export function getPromise(method) {
+  return new Promise(method).catch((e) => {/*console.warn(e)*/});
+}
 // Create debug log
 const logDir ='./fa_gallery_downloader/logs';
 const logFileName = join(logDir, `debug-${Date.now()}.log`);

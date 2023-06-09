@@ -1,4 +1,4 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo, getVersion, hideConsole } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo, getVersion, hideConsole, getPromise } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, DEFAULT_BROWSER_PARAMS, FA_USER_BASE, BROWSER_DIR } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
@@ -15,16 +15,17 @@ import open from 'open';
 
 const startupLink = join('file://', __dirname, './html/startup.html');
 
+
 /**
  * Find the path to a browser executable to use for Puppeteer
  * @returns 
  */
 async function getBrowserPath() {
   const product = 'chrome';
-  let chromePath = await getChromiumPath() || await getChromePath();
+  let chromePath = await getPromise(getChromiumPath) || await getPromise(getChromePath);
   if (!chromePath) {
     // We'll have to download one...
-    console.log('[Warn] No compatible browser found!');
+    console.log('[Warn] No compatible browser found! Downloading one...');
     const os = pBrowsers.detectBrowserPlatform();
     const browser = pBrowsers.Browser.CHROME;
     const buildId = await pBrowsers.resolveBuildId(browser, os, pBrowsers.ChromeReleaseChannel.CANARY);
