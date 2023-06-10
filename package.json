@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node index.js",
     "lint": "eslint js --ext .js",
+    "lint:fix": "eslint js --fix --ext .js",
     "lint:init": "eslint --init",
     "build:windows": "caxa -i . -o \"./build/fa-gallery-downloader.exe\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
     "build:mac": "caxa -i . -o \"./build/fa-gallery-downloader.app\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
