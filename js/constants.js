@@ -17,3 +17,4 @@ export const IGNORE_DEFAULT_PARAMS = [
   `--enable-blink-features=IdleDetection`
 ];
 export const BROWSER_DIR = './fa_gallery_downloader/browser_profiles/';
+export const DOWNLOADED_BROWSER_DIR = './fa_gallery_downloader/downloaded_browser';

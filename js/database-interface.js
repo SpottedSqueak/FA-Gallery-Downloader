@@ -312,6 +312,30 @@ export async function fixFavoritesUsernames() {
   await db.exec(`DELETE FROM favorites WHERE LOWER(id) <> id`);
   return await db.exec(`DROP TABLE favTemp`);
 }
+
+// Saving user settings
+export async function saveUserSettings(userSettings) {
+  let data = Object.getOwnPropertyNames(userSettings)
+  .map((key) => {
+    let val = userSettings[key];
+    switch (typeof val) {
+      case 'string':
+        val = `'${val}'`;
+        break;
+      case 'object':
+        val = `'${JSON.stringify(val)}'`;
+        break;
+    }
+    return `${key} = ${val}`
+  });
+  db.run(`
+  UPDATE usersettings
+  SET ${data.join(',')}
+  `);
+}
+export async function getUserSettings() {
+  return db.get(`SELECT * FROM usersettings`);
+}
 /**
  * Used for making future upgrades/updates to the database, to enforce
  * a schema.
@@ -357,6 +381,16 @@ export async function upgradeDatabase() {
     case 5:
       await fixFavoritesUsernames();
       version = 6;
+    case 6:
+      await db.exec(`
+      CREATE TABLE IF NOT EXISTS usersettings (
+        latest_browser_version TEXT
+      )`);
+      await db.exec(`
+        INSERT INTO usersettings(latest_browser_version)
+        VALUES('')
+      `);
+      version = 7;
     default:
       await db.exec(`PRAGMA auto_vacuum = INCREMENTAL`);
       await db.exec(`PRAGMA user_version = ${version}`);
