@@ -11,6 +11,7 @@ export default {
           <object v-else-if="isPDF" class="pdf-embed" :data="computedContentPath" type="application/pdf" @error="error = true"></object>
           <object v-else-if="isTxt" class="pdf-embed txt" :data="computedContentPath" type="text/plain" @error="error = true"></object>
           <audio v-else-if="isMusic" class="music-embed" controls :src="computedContentPath" @error="error = true"></audio>
+          <div v-else-if="isDoc" class="download-link" @click="openInNewWindow">Content not embedded. Download to view!</div>
           <div v-else class="download-link" @click="downloadContent">Content not downloaded!<br>Download now?</div>
         </div>
         <div class="submission-metadata">
@@ -91,6 +92,13 @@ export default {
         this.contentPath
         && this.submission.is_content_saved
         && /(text|txt|rtf)$/i.test(this.submission.content_name)
+      );
+    },
+    isDoc() {
+      return (
+        this.contentPath
+        && this.submission.is_content_saved
+        && /(doc|docx)$/i.test(this.submission.content_name)
       );
     },
     isMusic() {

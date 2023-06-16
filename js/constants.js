@@ -18,3 +18,6 @@ export const IGNORE_DEFAULT_PARAMS = [
 ];
 export const BROWSER_DIR = './fa_gallery_downloader/browser_profiles/';
 export const DOWNLOADED_BROWSER_DIR = './fa_gallery_downloader/downloaded_browser';
+export const LOG_DIR = './fa_gallery_downloader/logs';
+export const DOWNLOAD_DIR = './fa_gallery_downloader/downloaded_content';
+export const DB_LOCATION = './fa_gallery_downloader/databases/fa-gallery-downloader.db';

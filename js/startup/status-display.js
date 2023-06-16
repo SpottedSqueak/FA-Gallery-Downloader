@@ -67,7 +67,7 @@ export default {
             const cBar = _this[bar];
             cBar.value = 0;
             if (bar === 'file') _this.filename = '';
-          }, 1000);
+          }, 500);
         }
       }
     },

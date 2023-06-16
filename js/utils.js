@@ -4,8 +4,10 @@ import got from 'got';
 import { dirname, join, } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
+import * as db from './database-interface.js';
 import util from 'util';
 import { exitCode, default as process, platform } from 'node:process';
+import { LOG_DIR as logDir } from './constants.js';
 
 export const isWindows = platform === 'win32';
 export const isMac = platform === 'darwin';
@@ -52,7 +54,6 @@ export function getPromise(method) {
   });
 }
 // Create debug log
-const logDir ='./fa_gallery_downloader/logs';
 const logFileName = join(logDir, `debug-${Date.now()}.log`);
 
 function setup() {
@@ -67,10 +68,11 @@ function setup() {
       defaultHooks[hook](util.format.apply(null, arguments));
     }
   });
-  process.on('uncaughtException', function(err) {
+  process.on('uncaughtException', async function(err) {
     //logFile.write(`${err.stack}`);
     stop.now = true;
     console.error(err);
+    await db.close();
     process.exit(2);
   });
   // Clean up log files
@@ -141,6 +143,12 @@ export function getHTML(url, sendHeaders = true) {
     return cheerio.load(result);
   }).catch((e) => console.error(e));
 }
+
+export async function urlExists(url, sendHeaders = true) {
+  let headers = sendHeaders ? faRequestHeaders : {};
+  headers = {...headers, method: 'HEAD' };
+  return got(url, headers).then(() => true).catch(() => false);
+}
 export function passUsername() {
   return page.evaluate(`window.setUsername?.('${username}')`);
 }
@@ -157,7 +165,9 @@ export function passStartupInfo(data) {
 export async function init(newPage) {
   page = newPage;
   if (isWindows) {
-    hideConsole = await import('node-hide-console-window').then((hc) => hc.hideConsole);
+    hideConsole = await import('node-hide-console-window')
+      .then((hc) => hc.hideConsole)
+      .catch(() => () => {});
   }
 }
 

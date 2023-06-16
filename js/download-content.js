@@ -1,11 +1,12 @@
-import { waitFor, log, logProgress, stop } from './utils.js';
+import { waitFor, log, logProgress, stop, getHTML, urlExists } from './utils.js';
 import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
 import fs from 'fs-extra';
 import got from 'got';
+import { DOWNLOAD_DIR as downloadDir } from './constants.js';
 
 const progressID = 'file';
-const downloadDir = './fa_gallery_downloader/downloaded_content';
+let thumbnailsRunning = false;
 
 /**
  * Handles the actual download and progress update for file saving.
@@ -14,36 +15,45 @@ const downloadDir = './fa_gallery_downloader/downloaded_content';
  * @param {String} results.content_name
  * @returns 
  */
-function downloadSetup(content_url, content_name, username) {
-  return new Promise((resolve, reject) => {
-    fs.ensureDirSync(`${downloadDir}/${username}`);
-    const dlStream = got.stream(content_url, faRequestHeaders);
-    const fStream = fs.createWriteStream(`${downloadDir}/${username}/${content_name}`);
-    dlStream.on("downloadProgress", ({ transferred, total, percent }) => {
-      const percentage = Math.round(percent * 100);
-      logProgress({ transferred, total, percentage, filename: content_name }, progressID);
-    })
-    .on("error", (error) => {
-      logProgress.reset(progressID);
-      console.error(`Download failed: ${error.message}`);
-      reject();
-    });
-
-    fStream.on("error", (error) => {
-        logProgress.reset(progressID);
-        console.error(`Could not write file to system: ${error.message}`);
-        reject();
+async function downloadSetup({ content_url, content_name, downloadLocation }) {
+  // Check to see if this file even exists by checking the header response
+  if (await urlExists(content_url)) {
+    return new Promise((resolve, reject) => {
+      fs.ensureDirSync(downloadLocation);
+      const fileLocation = `${downloadLocation}/${content_name}`;
+      const dlStream = got.stream(content_url, faRequestHeaders);
+      const fStream = fs.createWriteStream(fileLocation);
+      dlStream.on("downloadProgress", ({ transferred, total, percent }) => {
+        const percentage = Math.round(percent * 100);
+        logProgress({ transferred, total, percentage, filename: content_name }, progressID);
       })
-      .on("finish", () => {
-        // log(`[File] Downloaded: "${content_name}"`, progressID);
-        resolve();
+      .on("error", (error) => {
+        logProgress.reset(progressID);
+        console.error(`Download failed: ${error.message} for ${content_name}`);
+        fs.removeSync(fileLocation);
+        reject();
       });
-    dlStream.pipe(fStream);
-  });
+
+      fStream.on("error", (error) => {
+          logProgress.reset(progressID);
+          console.error(`Could not write file '${content_name}' to system: ${error.message}`);
+          fs.removeSync(fileLocation);
+          reject();
+        })
+        .on("finish", () => {
+          // log(`[File] Downloaded: "${content_name}"`, progressID);
+          resolve();
+        });
+      dlStream.pipe(fStream);
+    });
+  } else {
+    console.warn(`File '${content_name} does not exist!`);
+    return false;
+  }
 }
 
 export async function cleanupFileStructure() {
-  const content = await db.getAllDownloadedContentData();
+  const content = await db.getAllUnmovedContentData();
   if (!content.length) return;
   log('[Data] Reorganizing files...');
   function getPromise(index) {
@@ -74,22 +84,82 @@ export async function cleanupFileStructure() {
   }
   log(`[Data] Files reorganized by user!`);
 }
-export async function downloadSpecificContent({ content_url, content_name, username}) {
-  if (stop.now) return;
-  await downloadSetup(content_url, content_name, username);
-  return db.setContentSaved(content_url);
-}
+
 /**
- * Gets the next content_url to download and records when it's finally saved.
+ * Downloads the specified content.
  * @returns 
  */
-async function startNextDownload(name) {
+export async function downloadSpecificContent({ content_url, content_name, username }) {
   if (stop.now) return;
-  const contentInfo = await db.getNextUnsavedContent(name);
-  if (!contentInfo) return;
-  await downloadSpecificContent(contentInfo);
+  const downloadLocation = `${downloadDir}/${username}`;
+  return downloadSetup({ content_url, content_name, downloadLocation })
+    .then(() => db.setContentSaved(content_url))
+    .catch(() => {/** No need to record, just ignore */});
+}
+/**
+ * Downloads the specified thumbnail.
+ * @returns 
+ */
+export async function downloadThumbnail({ thumbnail_url, url:contentUrl, username }) {
+  if (stop.now) return;
+  let content_url = thumbnail_url || '';
+  // If blank...
+  if (!content_url) {
+    // Query the page to get it
+    const $ = await getHTML(contentUrl);
+    content_url = $('.page-content-type-text, .page-content-type-music').find('#submissionImg').attr('src') || '';
+    if (content_url) content_url = 'https:' + content_url;
+  }
+  if (!content_url) return;
+  const content_name = content_url.split('/').pop();
+  const downloadLocation = `${downloadDir}/${username}/thumbnail`;
+  return downloadSetup({ content_url, content_name, downloadLocation })
+    .then((fileSaved) => {
+      if (fileSaved === false) return db.setThumbnailSaved(contentUrl, '', '');
+      return db.setThumbnailSaved(contentUrl, content_url, content_name);
+    })
+    .catch(() => {/** No need to record, just ignore */});
+}
+/**
+ * Gets all download urls and records when they're done.
+ * @returns 
+ */
+async function startContentDownloads(name) {
+  if (stop.now) return;
+  const data = await db.getAllUnsavedContent(name);
+  if (!data.length) return;
+  let i = 0;
+  while (i < data.length) {
+    if (stop.now) return;
+    await downloadSpecificContent(data[i]);
+    if (!thumbnailsRunning) startThumbnailDownloads();
+    await waitFor(2000);
+    i++;
+  }
   await waitFor(2000);
-  startNextDownload(name);
+  return startContentDownloads(name);
+}
+async function startThumbnailDownloads() {
+  if (stop.now) return thumbnailsRunning = false;
+  thumbnailsRunning = true;
+  const data = await db.getAllUnsavedThumbnails();
+  if (!data.length) return thumbnailsRunning = false;
+  let i = 0;
+  while (i < data.length) {
+    if (stop.now) return thumbnailsRunning = false;
+    await downloadThumbnail(data[i]);
+    await waitFor(1000);
+    i++;
+  }
+  await waitFor(2000);
+  return startThumbnailDownloads();
+}
+
+async function startAllDownloads(name) {
+  return Promise.all([
+    startContentDownloads(name),
+    startThumbnailDownloads(),
+  ]);
 }
 /**
  * Starts the download loop for all content.
@@ -100,5 +170,5 @@ export async function initDownloads(name) {
   await waitFor(5000);
   if (stop.now) return;
   log('[File] Starting downloads...', progressID);
-  return startNextDownload(name);
+  return startAllDownloads(name);
 }

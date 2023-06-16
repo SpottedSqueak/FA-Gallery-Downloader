@@ -2,8 +2,9 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import fs from 'fs-extra';
 import process from 'node:process';
+import { DB_LOCATION as dbLocation } from './constants.js';
+import { upgradeDatabase } from './database-upgrade.js';
 
-const dbLocation = './fa_gallery_downloader/databases/fa-gallery-downloader.db';
 let db = null;
 
 function genericInsert(table, columns, placeholders, data) {
@@ -12,7 +13,7 @@ function genericInsert(table, columns, placeholders, data) {
   VALUES ${placeholders.join(',')}
 `, ...data);
 }
-export function getGalleryPage(offset = 0, count = 25, query = {}) {
+export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='DESC') {
   let { username, searchTerm, galleryType } = query;
   let searchQuery = '';
   let galleryQuery = '';
@@ -52,14 +53,17 @@ export function getGalleryPage(offset = 0, count = 25, query = {}) {
     title,
     username,
     content_name,
+    content_url,
     date_uploaded,
-    is_content_saved
+    is_content_saved,
+    thumbnail_name,
+    is_thumbnail_saved
   FROM subdata
   WHERE id IS NOT NULL
   ${searchQuery}
   ${usernameQuery}
   ${galleryQuery}
-  ORDER BY id DESC
+  ORDER BY content_name ${sortOrder}
   LIMIT ${count} OFFSET ${offset}
   `;
   return db.all(dbQuery);
@@ -105,7 +109,17 @@ export function setContentMoved(content_name) {
   WHERE content_name = '${content_name}'
   `);
 }
-export function getAllDownloadedContentData() {
+export function setThumbnailSaved(url, thumbnail_url, thumbnail_name) {
+  return db.run(`
+    UPDATE subdata
+    SET
+      is_thumbnail_saved = 1,
+      thumbnail_url = '${thumbnail_url}',
+      thumbnail_name = '${thumbnail_name}'
+    WHERE url = '${url}'
+  `);
+}
+export function getAllUnmovedContentData() {
   return db.all(`
   SELECT content_url, content_name, username
   FROM subdata
@@ -114,28 +128,46 @@ export function getAllDownloadedContentData() {
   `);
 }
 /**
- * Selects the next content_url to download.
+ * Retrieves all unsaved content to download.
  * @returns Database Promise that resolves to results of query
  */
-export function getNextUnsavedContent(name) {
+export function getAllUnsavedContent(name) {
   const defaultQuery = `
     SELECT content_url, content_name, username
     FROM subdata
     WHERE is_content_saved = 0
     AND content_url IS NOT NULL
+    AND username IS NOT NULL
+    ORDER BY content_name DESC
   `;
-  if (!name) return db.get(defaultQuery);
+  if (!name) return db.all(defaultQuery);
   const query =`
     SELECT content_url, content_name, username
     FROM subdata
     WHERE is_content_saved = 0
     AND content_url IS NOT NULL
     AND username LIKE '${name}'
+    ORDER BY content_name DESC
   `;
-  return db.get(query).then(results => {
-    if (!results?.content_name) return db.get(defaultQuery);
+  return db.all(query).then(results => {
+    if (!results?.content_name) return db.all(defaultQuery);
     else return results;
-  })
+  });
+}
+
+export function getAllUnsavedThumbnails() {
+  return db.all(`
+    SELECT url, content_url, username, thumbnail_url
+    FROM subdata
+    WHERE is_thumbnail_saved = 0
+    AND username IS NOT NULL
+    AND (
+      content_url LIKE '%/stories/%'
+      OR content_url LIKE '%/music/%'
+      OR content_url LIKE '%/poetry/%'
+    )
+    ORDER BY content_name DESC
+  `);
 }
 /**
  * Returns all entries without necessary data.
@@ -163,27 +195,16 @@ export function getAllUsernames() {
  * @returns Database Promise
  */
 export function saveMetaData(url, d) {
-  const data = [
-    d.id,
-    d.title,
-    d.desc,
-    d.tags,
-    d.content_name,
-    d.content_url,
-    d.date_uploaded,
-    d.username,
-  ];
+  const data = [];
+  let queryNames = Object.getOwnPropertyNames(d)
+  .map(key => {
+    data.push(d[key]);
+    return `${key} = ?`
+  });
   return db.run(`
   UPDATE subdata
   SET 
-    id = ?,
-    title = ?,
-    desc = ?,
-    tags = ?,
-    content_name = ?,
-    content_url =?,
-    date_uploaded = ?,
-    username = ?
+    ${queryNames.join(',')}
   WHERE url = '${url}'`, ...data);
 }
 /**
@@ -196,7 +217,7 @@ export function getSubmissionLinks() {
   SELECT rowid, url
   FROM subdata
   WHERE id IS null
-  ORDER BY rowid DESC
+  ORDER BY url DESC
   `);
 }
 /**
@@ -297,21 +318,7 @@ export function getAllSubmissionData() {
 export function getAllCompleteSubmissionData() {
   return db.all('SELECT * from subdata WHERE id IS NOT NULL');
 }
-export async function fixFavoritesUsernames() {
-  await db.exec(`
-    CREATE TABLE favTemp (
-      id TEXT UNIQUE ON CONFLICT IGNORE,
-      url TEXT,
-      username TEXT
-    )`);
-  await db.exec(`
-    INSERT INTO favTemp
-    SELECT LOWER(id) AS id, LOWER(username) AS username, url FROM favorites
-  `);
-  await db.exec(`INSERT INTO favorites SELECT * FROM favTemp`);
-  await db.exec(`DELETE FROM favorites WHERE LOWER(id) <> id`);
-  return await db.exec(`DROP TABLE favTemp`);
-}
+
 
 // Saving user settings
 export async function saveUserSettings(userSettings) {
@@ -336,66 +343,9 @@ export async function saveUserSettings(userSettings) {
 export async function getUserSettings() {
   return db.get(`SELECT * FROM usersettings`);
 }
-/**
- * Used for making future upgrades/updates to the database, to enforce
- * a schema.
- * @returns If an error occurred or not. If yes, we need to exit!
- */
-export async function upgradeDatabase() {
-  const { user_version } = await db.get('PRAGMA user_version');
-  let version = user_version;
-  switch(user_version) {
-    case 0:
-    case 1:
-      await db.exec('ALTER TABLE subdata ADD COLUMN username TEXT')
-        .catch(() => {/* Column already exists, just continue */});
-      version = 2;
-    case 2:
-      await db.exec(`
-      CREATE TABLE IF NOT EXISTS commentdata (
-        id TEXT UNIQUE ON CONFLICT REPLACE,
-        submission_id TEXT,
-        width TEXT,
-        username TEXT,
-        desc TEXT,
-        subtitle TEXT,
-        date TEXT
-      )`);
-      version = 3;
-    case 3:
-      await db.exec(`
-      CREATE TABLE IF NOT EXISTS ownedaccounts (
-        username TEXT UNIQUE ON CONFLICT IGNORE
-      )`);
-      await db.exec(`
-      CREATE TABLE IF NOT EXISTS favorites (
-        id TEXT UNIQUE ON CONFLICT IGNORE,
-        url TEXT,
-        username TEXT
-      )`);
-      version = 4;
-    case 4:
-      await db.exec('ALTER TABLE subdata ADD COLUMN moved_content INTEGER default 0')
-      .catch(() => {/* Column already exists, just continue */});
-      version = 5;
-    case 5:
-      await fixFavoritesUsernames();
-      version = 6;
-    case 6:
-      await db.exec(`
-      CREATE TABLE IF NOT EXISTS usersettings (
-        latest_browser_version TEXT
-      )`);
-      await db.exec(`
-        INSERT INTO usersettings(latest_browser_version)
-        VALUES('')
-      `);
-      version = 7;
-    default:
-      await db.exec(`PRAGMA auto_vacuum = INCREMENTAL`);
-      await db.exec(`PRAGMA user_version = ${version}`);
-      console.log(`Database now at: v${version}`);
-  }
+
+export async function close() {
+  return db.close();
 }
 
 /**
@@ -434,9 +384,12 @@ export async function init() {
         .then(db.exec(`PRAGMA user_version = 2`));
     }
   })
-  .then(upgradeDatabase)
-  .catch((e) => {
+  .then(() => {
+    upgradeDatabase(db);
+  })
+  .catch(async (e) => {
     console.error(e);
+    await db.close();
     process.exit(2);
   });
 }

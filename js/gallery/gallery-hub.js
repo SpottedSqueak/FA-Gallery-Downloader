@@ -21,6 +21,13 @@ export default {
           <button class="gallery-next" :disabled="!results.length || results.length < count" @click="next">Next</button>
         </div>
         <div class="gallery-results-container">
+          <div class="sort-order-container">
+            <label for="sort-order">Sort: </label>
+            <select id="sort-order" v-model="sortOrder" @change="getResults">
+              <option value="DESC">Newest to oldest</option>
+              <option value="ASC">Oldest to newest</option>
+            </select>
+          </div>
           <template v-for="result in results" :key="result.content_name">
             <gallery-tile @load-submission="loadSubmission" v-bind="result" @search-user="searchUser"></gallery-tile>
           </template>
@@ -40,11 +47,12 @@ export default {
     return {
       count: 28,
       offset: 0,
-      results: {},
+      results: [],
       contentPath: '',
       submissionData: null,
       query: {},
       outsideUsername: '',
+      sortOrder: 'DESC',
     };
   },
   mounted() {
@@ -82,6 +90,7 @@ export default {
         offset: this.offset,
         count: this.count,
         query: this.query,
+        sortOrder: this.sortOrder,
       };
       return window.getGalleryPage(payload)
       .then(results => _this.results = results);
@@ -112,7 +121,7 @@ export default {
       this.query = query;
       this.offset = 0;
       if (this.query.galleryType && !this.query.username) {
-        this.results = {};
+        this.results = [];
         return;
       }
       this.getResults();

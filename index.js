@@ -100,8 +100,8 @@ async function init() {
     }
     await passStartupInfo(data);
   });
-  await page.goto(startupLink);
   if (await checkIfLoggedIn(page)) await passUsername();
+  await page.goto(startupLink);
   // Repair DB if needed
   await checkDBRepair();
 }

@@ -26,6 +26,7 @@ async function checkIfCookiesExpired() {
   // Do a final check just to be sure cookies didn't expire
   const $ = await getHTML(FA_URL_BASE);
   const notLoggedIn = !setUsername($);
+  if (!notLoggedIn) await setOwnedAccount(username);
   return notLoggedIn;
 }
 

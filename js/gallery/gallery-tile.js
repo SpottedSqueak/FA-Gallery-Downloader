@@ -6,9 +6,9 @@ export default {
     <div class="gallery-tile">
       <div class="gallery-tile__thumbnail" @click="loadSubmission" :alt="altText" :title="altText">
         <div v-if="error" class="gallery-tile__thumbnail-other">⚠ ERROR! ⚠<br>Possible<br>corrupt file!</div>
-        <img v-else-if="isImg" :class="{'too-wide': isTooWide}" :src="computedImgPath" @load="onImgLoad" @error="error = true"/>
+        <img v-else-if="isImg" :class="{'too-wide': isTooWide, 'too-small': isTooSmall }" :src="computedImgPath" @load="onImgLoad" @error="onError"/>
         <div v-else-if="!is_content_saved" class="gallery-tile__thumbnail-other not-downloaded"><span>File not yet downloaded!<br>Type: {{fileExtension}}</span></div>
-        <div v-else class="gallery-tile__thumbnail-other file-type"><span>{{fileExtension}}</span></div>
+        <div v-else class="gallery-tile__thumbnail-other file-type"><span>Filetype:<br>{{fileExtension}}</span></div>
       </div>
       <div class="gallery-tile__info">
         <div class="gallery-tile__title" @click="loadSubmission" :alt="altText" :title="altText">{{title}}</div>
@@ -17,15 +17,17 @@ export default {
       </div>
     </div>
   `,
-  props: ['id', 'title', 'username', 'content_name', 'date_uploaded', 'is_content_saved'],
+  props: ['id', 'title', 'username', 'content_name', 'date_uploaded', 'is_content_saved', 'thumbnail_name', 'is_thumbnail_saved'],
   emits: ['loadSubmission', 'searchUser'],
   data() {
     return {
       contentPath: '',
       isTooWide: false,
+      isTooSmall: false,
       altText: 'View this submission!',
       userAltText: 'Search for this user!',
       error: false,
+      isDefaultThumbnail: false,
     };
   },
   beforeMount() {
@@ -37,10 +39,17 @@ export default {
       return (
         this.contentPath
         && this.is_content_saved
-        && /(png|jpg|gif|webp|jpeg)$/i.test(this.content_name)
+        && (/(png|jpg|gif|webp|jpeg)$/i.test(this.content_name)
+            || this.isThumbnail
+        ) && !this.isDefaultThumbnail
       );
     },
+    isThumbnail() {
+      return this.thumbnail_name && this.is_thumbnail_saved;
+    },
     computedImgPath() {
+      if (this.thumbnail_name && this.is_thumbnail_saved)
+        return `${this.contentPath}\\${this.username}\\thumbnail\\${this.thumbnail_name}`;
       return `${this.contentPath}\\${this.username}\\${this.content_name}`;
     },
     fileExtension() {
@@ -54,15 +63,30 @@ export default {
     async getContentPath() {
       this.contentPath = await window.getContentPath();
     },
-    onImgLoad(l) {
+    async onImgLoad(l) {
+      this.error = false;
       const img = l.target;
-      this.isTooWide = img.height < img.parentElement.offsetHeight/2;
+      const parent = img.parentElement;
+      // Nothing should ever be this perfectly tiny
+      if (!img.clientWidth) {
+        await this.waitFor();
+        return this.onImgLoad({ target: img });
+      }
+      this.isDefaultThumbnail = img.clientWidth === 50 && img.clientHeight === 50;
+      this.isTooSmall = !this.isDefaultThumbnail && img.clientHeight <= parent.offsetHeight/2;
+      this.isTooWide = !this.isDefaultThumbnail && img.clientWidth > parent.offsetWidth;
+    },
+    onError() {
+      this.error = true;
     },
     loadSubmission() {
       this.$emit('loadSubmission', this.id);
     },
     searchUser() {
       this.$emit('searchUser', this.username);
+    },
+    waitFor(t = 1000) {
+      return new Promise(r => setTimeout(r, t));
     }
   },
 }

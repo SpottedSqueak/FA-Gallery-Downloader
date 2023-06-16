@@ -81,7 +81,8 @@ export async function setupBrowser() {
   let page = await browser.pages().then(p => p[0]);
   page.setDefaultNavigationTimeout(0);
   // Close program when main page is closed
-  page.on('close', () => {
+  page.on('close', async () => {
+    await db.close();
     process.exit(1);
   });
   // Display startup page
