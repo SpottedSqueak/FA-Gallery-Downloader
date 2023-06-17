@@ -18,6 +18,7 @@ export default {
         <div class="warning">(WARNING: This can be a HUGE amount!!)</div>
       </div>
       <div class="user-choices">
+        <button id="repair" @click.prevent="repair" :alt="repairAlt" :title="repairAlt">Repair Database</button>
         <button id="login" @click.prevent="login">{{loginBtnText}}</button>
         <button id="view-gallery" @click.prevent="viewGallery">View Gallery</button>
         <button id="stop-all" :disabled="notActive" @click.prevent="stopAll">Stop</button>
@@ -43,6 +44,7 @@ export default {
       scrapeComments: true,
       scrapeFavorites: false,
       notActive: true,
+      repairAlt: 'Check and repair submission data (tags, ratings, etc.)',
     };
   },
   watch: {
@@ -70,6 +72,9 @@ export default {
     },
     viewGallery() {
       this.$emit('sendEvent', 'view-gallery');
+    },
+    repair() {
+      this.$emit('sendEvent', 'repair');
     },
     stopAll() {
       this.notActive = true;

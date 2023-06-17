@@ -177,8 +177,13 @@ export function needsRepair() {
   return db.all(`
   SELECT url
   FROM subdata
-  WHERE username IS NULL
-  AND id IS NOT NULL
+  WHERE id IS NOT NULL
+  AND (
+    username IS NULL
+    OR rating IS NULL
+    OR tags IS NULL
+    OR category IS NULL
+  )
   `);
 }
 export function getAllUsernames() {

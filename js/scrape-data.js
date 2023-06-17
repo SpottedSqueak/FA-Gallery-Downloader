@@ -99,6 +99,8 @@ export async function scrapeSubmissionInfo(data = null, downloadComments) {
       content_url: $('.download > a').attr('href'),
       date_uploaded: $('.submission-id-sub-container .popup_date').attr('title'),
       thumbnail_url: $('.page-content-type-text, .page-content-type-music').find('#submissionImg').attr('src') || '',
+      rating: $('.rating .rating-box').first().text().trim(),
+      category: $('.info.text > div > div').text().trim(),
     };
     // Test to fix FA url weirdness
     if (!/^https/i.test(data.content_url)) data.content_url = 'https:' + data.content_url;

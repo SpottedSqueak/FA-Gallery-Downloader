@@ -44,13 +44,9 @@ async function downloadPath(name = username, scrapeGallery = true, scrapeComment
 }
 
 async function checkDBRepair() {
-  log('[Data] Checking database...');
-  const inNeedofRepairArr = await db.needsRepair();
-  if (inNeedofRepairArr.length) {
-    logLast('Database incomplete! Working on that now...');
-    await scrapeSubmissionInfo(inNeedofRepairArr);
-    logLast(`Database repaired!`);
-  } else logLast(`Database OK!`);
+  const needsRepair = await db.needsRepair();
+  if (needsRepair.length)
+    log(`[Data] Database in need of repair!  ${needsRepair.length} submissions have incomplete data.`);
   await cleanupFileStructure();
 }
 
@@ -80,8 +76,16 @@ async function init() {
     } else if (choice === 'stop-all') {
       stop.now = true;
       log('Stopping data scraping...');
-    } else if(choice === 'open') {
+    } else if (choice === 'open') {
       if (url) open(url);
+    } else if (choice === 'repair') {
+      log('[Data] Checking database...');
+      const inNeedOfRepair = await db.needsRepair();
+      if (inNeedOfRepair.length) {
+        logLast('Database incomplete! Working on that now...');
+        await scrapeSubmissionInfo(inNeedOfRepair);
+        if (!stop.now) logLast(`Database repaired!`);
+      } else logLast(`Database OK!`);
     }
   });
   page.on('domcontentloaded', async () => {

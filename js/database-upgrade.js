@@ -85,6 +85,12 @@ export async function upgradeDatabase(db) {
     case 7:
       await createThumbnailInfo(db);
       version = 8;  
+    case 8:
+      await db.exec(`ALTER TABLE subdata ADD COLUMN rating TEXT`)
+      .catch(() => {});
+      await db.exec(`ALTER TABLE subdata ADD COLUMN category TEXT`)
+      .catch(() => {});
+      version = 9;
     default:
       await db.exec(`VACUUM`);
       await db.exec(`PRAGMA user_version = ${version}`);
