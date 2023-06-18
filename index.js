@@ -104,11 +104,9 @@ async function init() {
       accounts: accounts.map(a => a.username),
       current: getVersion(),
     };
-    let $ = await getHTML('https://github.com/SpottedSqueak/FA-Gallery-Downloader/commits/main', false);
+    let $ = await getHTML('https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases', false);
     if ($) {
-      const latest = $('.js-commits-list-item a.markdown-title').filter(function () {
-        return /v?\d+.\d+.\d+/gi.test($(this).text());
-      }).first().text();
+      const latest = $('a.Link--primary').first().text().replace('v', '');
       data.latest = latest;
     }
     await passStartupInfo(data);
