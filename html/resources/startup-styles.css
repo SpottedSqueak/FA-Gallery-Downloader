@@ -71,6 +71,9 @@ label + input {
 label + progress {
   margin-left: 8px;
 }
+li > button {
+  margin-left: 12px;
+}
 
 /* Startup Page Styles */
 .startup-container {

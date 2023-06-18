@@ -46,7 +46,7 @@ async function downloadPath(name = username, scrapeGallery = true, scrapeComment
 async function checkDBRepair() {
   const needsRepair = await db.needsRepair();
   if (needsRepair.length)
-    log(`[Data] Database in need of repair!  ${needsRepair.length} submissions have incomplete data.`);
+    log(`[Data] Database in need of repair:  ${needsRepair.length} submissions have incomplete data.`);
   await cleanupFileStructure();
 }
 
@@ -59,7 +59,8 @@ async function init() {
   // Hide console on Windows
   hideConsole();
   // Wait for path decision
-  await page.exposeFunction('userPath', async ({ choice, name, scrapeGallery, scrapeComments, scrapeFavorites, url }) => {
+  await page.exposeFunction('userPath', async (data) => {
+    const { choice } = data;
     stop.reset();
     if (choice === 'login') {
       if (!username) await handleLogin(browser);
@@ -69,6 +70,7 @@ async function init() {
     } else if (choice === 'start-download') {
       if (!username) await handleLogin(browser);
       await passUsername();
+      const { name, scrapeGallery, scrapeComments, scrapeFavorites } = data;
       downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
     } else if (choice === 'view-gallery') {
       log(`[Data] Opening gallery viewer...`);
@@ -77,15 +79,22 @@ async function init() {
       stop.now = true;
       log('Stopping data scraping...');
     } else if (choice === 'open') {
-      if (url) open(url);
+      if (data.url) open(data.url);
     } else if (choice === 'repair') {
       log('[Data] Checking database...');
+      if (inProgress)
+        return log(`[Data] Please stop data scraping before restarting!`);
+      inProgress = true;
       const inNeedOfRepair = await db.needsRepair();
       if (inNeedOfRepair.length) {
         logLast('Database incomplete! Working on that now...');
-        await scrapeSubmissionInfo(inNeedOfRepair);
+        await scrapeSubmissionInfo(inNeedOfRepair, true)
+          .finally(() => inProgress = false);
         if (!stop.now) logLast(`Database repaired!`);
       } else logLast(`Database OK!`);
+    } else if (choice === 'export-data') {
+      const allUserData = await db.getAllSubmissionsForUser(data.name);
+      log(`[#TODO] Exporting ${allUserData.length} submissions for account: ${data.name}`);
     }
   });
   page.on('domcontentloaded', async () => {

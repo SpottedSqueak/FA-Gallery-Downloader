@@ -17,12 +17,23 @@ export default {
         <div class="submission-metadata">
           <button class="close-btn" @click="close">✖ Close</button>
           <button class="full-size-btn" :disabled="!submission.is_content_saved" @click.self="openInNewWindow">View Full Size</button>
-          <h3>Tags</h3>
-          <ul class="submission-metadata__tags">
-            <li v-for="tag in cleanTags">
-              {{tag}}
-            </li>
-          </ul>
+          <div class="submission-metadata__info">
+            <h3>Rating</h3>
+            <div :class="[cleanRating]">{{submission.rating || '[Missing]'}}</div>
+          </div>
+          <div class="submission-metadata__info">
+            <h3>Category</h3>
+            <div>{{submission.category  || '[Missing]'}}</div>
+          </div>
+          <div class="submission-metadata__info">
+            <h3>Tags</h3>
+            <ul class="submission-metadata__tags">
+              <li v-for="tag in cleanTags">
+                {{tag}}
+              </li>
+            </ul>
+            <div v-if="!cleanTags.length">No Tags</div>
+          </div>
         </div>
         <div class="submission-info">
           <div class="submission-info__header">
@@ -46,7 +57,10 @@ export default {
           <div class="comment" :style="comment.width">
             <div class="comment-icon"><img :src="getCleanUserImg(comment.username)" @error="fixIcon" /></div>
             <div class="comment-header">
-              <div class="comment-user">{{getCleanUsername(comment.username)}}</div>
+              <div class="comment-user">
+                {{getCleanUsername(comment.username)}}
+                <span :alt="comment.date" :title="comment.date">{{getCommentDate(comment.date)}}</span>
+              </div>
               <div class="comment-subtitle">{{comment.subtitle}}</div>
             </div>
             <div class="comment-desc" v-html="getCleanDesc(comment.desc)"></div>
@@ -124,8 +138,11 @@ export default {
       return this.getCleanDesc(this.submission.desc);
     },
     cleanTags() {
-      return this.submission.tags?.split(',');
+      return this.submission.tags?.split(',') || [];
     },
+    cleanRating() {
+      return this.submission.rating?.toLowerCase() || '';
+    }
   },
   methods: {
     getCleanUsername(name) {
@@ -139,6 +156,9 @@ export default {
       return desc
         .replace(/"\/\//gi, '"https://')
         .replace(/"\/user/gi, '"https://www.furaffinity.net/user');
+    },
+    getCommentDate(date) {
+      return getRelativeTime(+new Date(date));
     },
     async getContentPath() {
       this.contentPath = await window.getContentPath();

@@ -29,7 +29,7 @@ export default {
       <p>Login to an account to see it listed here!</p>
       <ul>
         <template v-for="name in accounts">
-          <li>{{name}}</li>
+          <li>{{name}} <button disabled @click.prevent="exportData(name)">Export</button></li>
         </template>
       </ul>
     </div>
@@ -52,7 +52,7 @@ export default {
       if (newName) this.username = newName;
     },
     outsideActive(val) {
-      if (val) this.notActive = false;
+      this.notActive = !val;
     },
   },
   computed: {
@@ -81,9 +81,12 @@ export default {
       this.$emit('sendEvent', 'stop-all');
     },
     sendData() {
-      this.notActive = false;
+      // this.notActive = false;
       const { name, scrapeGallery, scrapeComments, scrapeFavorites } = this;
       this.$emit('sendData',  { name, scrapeGallery, scrapeComments, scrapeFavorites });
+    },
+    exportData(name) {
+      this.$emit('sendEvent', { choice: 'export-data', name });
     }
   }
 }

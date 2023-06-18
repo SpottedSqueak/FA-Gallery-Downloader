@@ -4,11 +4,13 @@ export default {
   name: 'gallery-tile',
   template: `
     <div class="gallery-tile">
-      <div class="gallery-tile__thumbnail" @click="loadSubmission" :alt="altText" :title="altText">
-        <div v-if="error" class="gallery-tile__thumbnail-other">⚠ ERROR! ⚠<br>Possible<br>corrupt file!</div>
-        <img v-else-if="isImg" :class="{'too-wide': isTooWide, 'too-small': isTooSmall }" :src="computedImgPath" @load="onImgLoad" @error="onError"/>
-        <div v-else-if="!is_content_saved" class="gallery-tile__thumbnail-other not-downloaded"><span>File not yet downloaded!<br>Type: {{fileExtension}}</span></div>
-        <div v-else class="gallery-tile__thumbnail-other file-type"><span>Filetype:<br>{{fileExtension}}</span></div>
+      <div class="gallery-tile__thumbnail" :class="[classRating]" @click="loadSubmission" :alt="altText" :title="altText">
+        <div class="gallery-tile__thumbnail_wrapper">
+          <div v-if="error" class="gallery-tile__thumbnail-other">⚠ ERROR! ⚠<br>Possible<br>corrupt file!</div>
+          <img v-else-if="isImg" :class="{'too-wide': isTooWide, 'too-small': isTooSmall }" :src="computedImgPath" @load="onImgLoad" @error="onError"/>
+          <div v-else-if="!is_content_saved" class="gallery-tile__thumbnail-other not-downloaded"><span>File not yet downloaded!<br>Type: {{fileExtension}}</span></div>
+          <div v-else class="gallery-tile__thumbnail-other file-type"><span>Filetype:<br>{{fileExtension}}</span></div>
+        </div>
       </div>
       <div class="gallery-tile__info">
         <div class="gallery-tile__title" @click="loadSubmission" :alt="altText" :title="altText">{{title}}</div>
@@ -17,7 +19,7 @@ export default {
       </div>
     </div>
   `,
-  props: ['id', 'title', 'username', 'content_name', 'date_uploaded', 'is_content_saved', 'thumbnail_name', 'is_thumbnail_saved'],
+  props: ['id', 'title', 'username', 'content_name', 'date_uploaded', 'is_content_saved', 'thumbnail_name', 'is_thumbnail_saved', 'rating'],
   emits: ['loadSubmission', 'searchUser'],
   data() {
     return {
@@ -58,6 +60,9 @@ export default {
     relativeDate() {
       return getRelativeTime(+new Date(this.date_uploaded));
     },
+    classRating() {
+      return this?.rating?.toLowerCase();
+    }
   },
   methods: {
     async getContentPath() {

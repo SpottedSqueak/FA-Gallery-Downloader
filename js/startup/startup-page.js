@@ -57,7 +57,7 @@ export default {
       this.queryName = name;
     }
     window.logProgress = ({ bar, value, max, reset, filename }) => {
-      this.isActive = true;
+      // this.isActive = true;
       this.logProgress = { bar, value, max, reset, filename };
     }
     window.setPageInfo = (data) => {
@@ -91,10 +91,11 @@ export default {
       data.choice = 'start-download';
       window.userPath?.(data);
     },
-    sendEvent(choice) {
-      // this.isActive = true;
-      // this.msg = { text: `[Data] Firing "${choice}" event!`};
-      window.userPath?.({ choice });  
+    sendEvent(data) {
+      if (data.length) data = { choice: data };
+      if (data.choice === 'repair') this.isActive = true;
+      if (data.choice === 'stop-all') this.isActive = false;
+      window.userPath?.(data);  
     },
     fixIcon(e) {
       e.target.src = '../html/resources/_default.gif';

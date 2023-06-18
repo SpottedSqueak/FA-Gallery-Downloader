@@ -5,6 +5,8 @@
   --border-radius: 5px;
   --border-color: #cfd3eb;
   --link-color: #e2ecf3;
+  --mature-color: #697cc1;
+  --adult-color: #971c1c;
 }
 /** Default element styles **/
 * {
@@ -63,6 +65,33 @@ label + select {
 .v-enter-from,
 .v-leave-to {
   opacity: 0;
+}
+.mature {
+  font-weight: bold;
+}
+.adult {
+  font-weight: bold;
+}
+.mature .gallery-tile__thumbnail_wrapper::before,
+.adult .gallery-tile__thumbnail_wrapper::before {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  font-size: small;
+  font-weight: bold;
+  padding: 2px 0;
+  margin: 0;
+  color: #fff;
+}
+.mature .gallery-tile__thumbnail_wrapper::before {
+  content: "Mature";
+  background: var(--mature-color);
+}
+.adult .gallery-tile__thumbnail_wrapper::before {
+  content: "Adult";
+  background: var(--adult-color);
 }
 /** Gallery Styles **/
 .gallery-title {
@@ -134,8 +163,12 @@ label + select {
 .gallery-tile > div {
   width: 100%;
 }
+.tile__thumbnail_wrapper {
+  overflow: hidden;
+}
 div[class^="gallery-tile__thumbnail"] {
   display: flex;
+  position: relative;
   width: 300px;
   max-width: 100%;
   min-height: 250px;
@@ -258,6 +291,9 @@ div.gallery-tile__info {
 .full-size-btn {
   font-size: 1em;
 }
+.submission-metadata__info > div {
+  margin-left: 12px;
+}
 .submission-metadata__tags {
   margin: 0 auto;
   padding: 0;
@@ -337,6 +373,11 @@ div.gallery-tile__info {
 .comment-user {
   font-size: 1.2em;
   font-weight: bold;
+}
+.comment-user > span {
+  font-size: smaller;
+  font-weight:normal;
+  float: right;
 }
 .comment-subtitle {
   font-size: 0.8em;

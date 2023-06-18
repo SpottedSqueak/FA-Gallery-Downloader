@@ -7,12 +7,147 @@ import { upgradeDatabase } from './database-upgrade.js';
 
 let db = null;
 
+// INSERT/UPDATE functions
 function genericInsert(table, columns, placeholders, data) {
   return db.run(`
   INSERT INTO ${table} (${columns})
   VALUES ${placeholders.join(',')}
 `, ...data);
 }
+/**
+ * Marks the given content_url as saved (downloaded).
+ * @param {String} content_url 
+ * @returns Database Promise
+ */
+export function setContentSaved(content_url) {
+  return db.run(`
+  UPDATE subdata
+  SET
+    is_content_saved = 1,
+    moved_content = 1
+  WHERE content_url = '${content_url}'
+  `);
+}
+export function setContentMoved(content_name) {
+  return db.run(`
+  UPDATE subdata
+  SET
+    moved_content = 1
+  WHERE content_name = '${content_name}'
+  `);
+}
+export function setThumbnailSaved(url, thumbnail_url, thumbnail_name) {
+  return db.run(`
+    UPDATE subdata
+    SET
+      is_thumbnail_saved = 1,
+      thumbnail_url = '${thumbnail_url}',
+      thumbnail_name = '${thumbnail_name}'
+    WHERE url = '${url}'
+  `);
+}
+/**
+ * Takes the given data for the given url and updates the appropriate database columns.
+ * @param {String} url 
+ * @param {Object} d 
+ * @returns Database Promise
+ */
+export function saveMetaData(url, d) {
+  const data = [];
+  let queryNames = Object.getOwnPropertyNames(d)
+  .map(key => {
+    data.push(d[key]);
+    return `${key} = ?`
+  });
+  return db.run(`
+  UPDATE subdata
+  SET 
+    ${queryNames.join(',')}
+  WHERE url = '${url}'`, ...data);
+}
+/**
+ * Creates blank entries in the database for all given submission URLs
+ * for later updating.
+ * @param {Array<Strings>} links 
+ * @param {Boolean} isScraps 
+ * @returns 
+ */
+export function saveLinks(links, isScraps = false) {
+  let placeholder = [];
+  const data = links.reduce((acc, val) => {
+    let data = [val, isScraps, false];
+    let marks = `(${data.map(()=>'?').join(',')})`;
+    acc.push(...data);
+    placeholder.push(marks);
+    return acc;
+    }, []);
+  return genericInsert('subdata', 'url, is_scrap, is_content_saved', placeholder, data);
+}
+export function saveComments(comments) {
+  let placeholder = [];
+  const data = comments.reduce((acc, c) => {
+    let data = [c.id, c.submission_id, c.width, c.username, c.desc, c.subtitle, c.date];
+    let marks = `(${data.map(()=>'?').join(',')})`;
+    acc.push(...data);
+    placeholder.push(marks);
+    return acc;
+  }, []);
+  placeholder.join(',');
+  return db.run(`
+  INSERT INTO commentdata (
+    id,
+    submission_id,
+    width,
+    username,
+    desc,
+    subtitle,
+    date
+  ) 
+  VALUES ${placeholder}
+  ON CONFLICT(id) DO UPDATE SET
+    desc = excluded.desc
+  `, ...data);
+}
+export function saveFavorites(username, links) {
+  let placeholder = [];
+  const data = links.reduce((acc, val) => {
+    let data = [username+val, username, val];
+    let marks = `(${data.map(()=>'?').join(',')})`;
+    acc.push(...data);
+    placeholder.push(marks);
+    return acc;
+    }, []);
+  return genericInsert('favorites', 'id, username, url', placeholder, data);
+}
+/**
+ * Set all user settings
+ * @param {Object} userSettings 
+ */
+export async function saveUserSettings(userSettings) {
+  let data = Object.getOwnPropertyNames(userSettings)
+  .map((key) => {
+    let val = userSettings[key];
+    switch (typeof val) {
+      case 'string':
+        val = `'${val}'`;
+        break;
+      case 'object':
+        val = `'${JSON.stringify(val)}'`;
+        break;
+    }
+    return `${key} = ${val}`
+  });
+  db.run(`
+  UPDATE usersettings
+  SET ${data.join(',')}
+  `);
+}
+export function setOwnedAccount(username) {
+  if (!username) return;
+  return genericInsert('ownedaccounts', 'username', ['(?)'], [username]);
+}
+
+// SELECT/GET functions
 export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='DESC') {
   let { username, searchTerm, galleryType } = query;
   let searchQuery = '';
@@ -57,7 +192,8 @@ export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='D
     date_uploaded,
     is_content_saved,
     thumbnail_name,
-    is_thumbnail_saved
+    is_thumbnail_saved,
+    rating
   FROM subdata
   WHERE id IS NOT NULL
   ${searchQuery}
@@ -69,7 +205,7 @@ export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='D
   return db.all(dbQuery);
 }
 /**
- * Returns all 
+ * Returns all submission info
  * @param {String} id 
  * @returns 
  */
@@ -87,38 +223,7 @@ export async function getSubmissionPage(id) {
   `);
   return data;
 }
-/**
- * Marks the given content_url as saved (downloaded).
- * @param {String} content_url 
- * @returns Database Promise
- */
-export function setContentSaved(content_url) {
-  return db.run(`
-  UPDATE subdata
-  SET
-    is_content_saved = 1,
-    moved_content = 1
-  WHERE content_url = '${content_url}'
-  `);
-}
-export function setContentMoved(content_name) {
-  return db.run(`
-  UPDATE subdata
-  SET
-    moved_content = 1
-  WHERE content_name = '${content_name}'
-  `);
-}
-export function setThumbnailSaved(url, thumbnail_url, thumbnail_name) {
-  return db.run(`
-    UPDATE subdata
-    SET
-      is_thumbnail_saved = 1,
-      thumbnail_url = '${thumbnail_url}',
-      thumbnail_name = '${thumbnail_name}'
-    WHERE url = '${url}'
-  `);
-}
+
 export function getAllUnmovedContentData() {
   return db.all(`
   SELECT content_url, content_name, username
@@ -193,25 +298,7 @@ export function getAllUsernames() {
   WHERE username IS NOT NULL
   `);
 }
-/**
- * Takes the given data for the given url and updates the appropriate database columns.
- * @param {String} url 
- * @param {Object} d 
- * @returns Database Promise
- */
-export function saveMetaData(url, d) {
-  const data = [];
-  let queryNames = Object.getOwnPropertyNames(d)
-  .map(key => {
-    data.push(d[key]);
-    return `${key} = ?`
-  });
-  return db.run(`
-  UPDATE subdata
-  SET 
-    ${queryNames.join(',')}
-  WHERE url = '${url}'`, ...data);
-}
+
 /**
  * Retrieves all submission links with uncollected data.
  * @param {Boolean} isScraps 
@@ -225,49 +312,7 @@ export function getSubmissionLinks() {
   ORDER BY url DESC
   `);
 }
-/**
- * Creates blank entries in the database for all given submission URLs
- * for later updating.
- * @param {Array<Strings>} links 
- * @param {Boolean} isScraps 
- * @returns 
- */
-export function saveLinks(links, isScraps = false) {
-  let placeholder = [];
-  const data = links.reduce((acc, val) => {
-    let data = [val, isScraps, false];
-    let marks = `(${data.map(()=>'?').join(',')})`;
-    acc.push(...data);
-    placeholder.push(marks);
-    return acc;
-    }, []);
-  return genericInsert('subdata', 'url, is_scrap, is_content_saved', placeholder, data);
-}
-export function saveComments(comments) {
-  let placeholder = [];
-  const data = comments.reduce((acc, c) => {
-    let data = [c.id, c.submission_id, c.width, c.username, c.desc, c.subtitle, c.date];
-    let marks = `(${data.map(()=>'?').join(',')})`;
-    acc.push(...data);
-    placeholder.push(marks);
-    return acc;
-  }, []);
-  placeholder.join(',');
-  return db.run(`
-  INSERT INTO commentdata (
-    id,
-    submission_id,
-    width,
-    username,
-    desc,
-    subtitle,
-    date
-  ) 
-  VALUES ${placeholder}
-  ON CONFLICT(id) DO UPDATE SET
-    desc = excluded.desc
-  `, ...data);
-}
+
 export function getComments(id) {
   return db.all(`
   SELECT *
@@ -276,27 +321,14 @@ export function getComments(id) {
   AND desc IS NOT NULL
   `);
 }
-export function setOwnedAccount(username) {
-  if (!username) return;
-  return genericInsert('ownedaccounts', 'username', ['(?)'], [username]);
-}
+
 export function getOwnedAccounts() {
   return db.all(`
     SELECT *
     FROM ownedaccounts
   `);
 }
-export function saveFavorites(username, links) {
-  let placeholder = [];
-  const data = links.reduce((acc, val) => {
-    let data = [username+val, username, val];
-    let marks = `(${data.map(()=>'?').join(',')})`;
-    acc.push(...data);
-    placeholder.push(marks);
-    return acc;
-    }, []);
-  return genericInsert('favorites', 'id, username, url', placeholder, data);
-}
+
 export function getAllFavoritesForUser(username) {
   if (!username) return;
   return db.all(`
@@ -307,6 +339,15 @@ export function getAllFavoritesForUser(username) {
       FROM favorites
       WHERE username = '${username}'
     )
+  `);
+}
+export function getAllSubmissionsForUser(username) {
+  if (!username) return;
+  return db.all(`
+    SELECT *
+    FROM subdata
+    WHERE username = '${username}'
+    AND is_content_saved = 1
   `);
 }
 /**
@@ -325,26 +366,7 @@ export function getAllCompleteSubmissionData() {
 }
 
 
-// Saving user settings
-export async function saveUserSettings(userSettings) {
-  let data = Object.getOwnPropertyNames(userSettings)
-  .map((key) => {
-    let val = userSettings[key];
-    switch (typeof val) {
-      case 'string':
-        val = `'${val}'`;
-        break;
-      case 'object':
-        val = `'${JSON.stringify(val)}'`;
-        break;
-    }
-    return `${key} = ${val}`
-  });
-  db.run(`
-  UPDATE usersettings
-  SET ${data.join(',')}
-  `);
-}
+
 export async function getUserSettings() {
   return db.get(`SELECT * FROM usersettings`);
 }
