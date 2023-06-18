@@ -1,6 +1,6 @@
 import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo, getVersion, hideConsole } from './js/utils.js';
 import * as db from './js/database-interface.js';
-import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
+import { FA_URL_BASE, FA_USER_BASE, RELEASE_CHECK } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { cleanupFileStructure, initDownloads } from './js/download-content.js';
@@ -104,7 +104,7 @@ async function init() {
       accounts: accounts.map(a => a.username),
       current: getVersion(),
     };
-    let $ = await getHTML('https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases', false);
+    let $ = await getHTML(RELEASE_CHECK, false);
     if ($) {
       const latest = $('a.Link--primary').first().text().replace('v', '');
       data.latest = latest;
