@@ -79,7 +79,16 @@ export default {
       return this.version && this.newVersion;
     },
     hasUpdate() {
-      return this.showVersion && this.version !== this.newVersion;
+      if (this.showVersion && this.version !== this.newVersion) {
+        const currVersion = this.version.split('.');
+        const newVersion = this.newVersion.split('.');
+        let i = 0;
+        while (i < currVersion.length) {
+          if (+newVersion[i] > +currVersion[i]) return true;
+          i++;
+        }
+      }
+      return false;
     }
   },
   methods: {
