@@ -9,4 +9,64 @@ on:
 name: Build Release
 
 jobs:
-  build:
+  insiders-build:
+    strategy:
+      matrix:
+        os: [windows, ubuntu]
+        include:
+          - os: windows
+            build: npm caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}.exe" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+            artifact: fa-gallery-downloader-${{github.ref_name}}.exe
+          - os: ubuntu
+            build: |
+              npm caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              tar -czf "fa-gallery-downloader-${{github.ref_name}}" "fa-gallery-downloader-${{github.ref_name}}.tgz"
+            artifact: fa-gallery-downloader-${{github.ref_name}}.tgz
+    runs-on: ${{matrix.os}}-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.20.0
+      - run: |
+          npm ci
+          ${{matrix.build}}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{matrix.artifact}}
+          path: ${{matrix.artifact}}
+  release:
+    needs: [insiders-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: fa-gallery-downloader-${{github.ref_name}}.exe
+      - uses: actions/download-artifact@v2
+        with:
+          name: fa-gallery-downloader-${{github.ref_name}}.sh
+      - uses: actions/create-release@v1
+        name: create-release
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          tag_name: ${{github.ref_name}}
+          release_name: v${{github.ref_name}}
+          draft: true
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          upload_url: ${{steps.create-release.outputs.upload_url}}
+          asset_path: fa-gallery-downloader-${{github.ref_name}}.exe
+          asset_name: fa-gallery-downloader-${{github.ref_name}}.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          upload_url: ${{steps.create-release.outputs.upload_url}}
+          asset_path: fa-gallery-downloader-${{github.ref_name}}.tgz
+          asset_name: fa-gallery-downloader-${{github.ref_name}}.tgz
+          asset_content_type: application/gzip
+
