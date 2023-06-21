@@ -20,7 +20,7 @@ jobs:
           - os: ubuntu
             build: |
               npx caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              tar -czf "fa-gallery-downloader-${{github.ref_name}}" "fa-gallery-downloader-${{github.ref_name}}.tgz"
+              tar -czf "fa-gallery-downloader-${{github.ref_name}}.tgz" "fa-gallery-downloader-${{github.ref_name}}"
             artifact: fa-gallery-downloader-${{github.ref_name}}.tgz
     runs-on: ${{matrix.os}}-latest
     steps:
