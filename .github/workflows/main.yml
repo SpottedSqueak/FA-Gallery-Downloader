@@ -15,11 +15,11 @@ jobs:
         os: [windows, ubuntu]
         include:
           - os: windows
-            build: npm caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}.exe" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+            build: npx caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}.exe" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
             artifact: fa-gallery-downloader-${{github.ref_name}}.exe
           - os: ubuntu
             build: |
-              npm caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
+              npx caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
               tar -czf "fa-gallery-downloader-${{github.ref_name}}" "fa-gallery-downloader-${{github.ref_name}}.tgz"
             artifact: fa-gallery-downloader-${{github.ref_name}}.tgz
     runs-on: ${{matrix.os}}-latest
@@ -28,9 +28,8 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 16.20.0
-      - run: |
-          npm ci
-          ${{matrix.build}}
+      - run: npm ci
+      - run: ${{matrix.build}}
       - uses: actions/upload-artifact@v2
         with:
           name: ${{matrix.artifact}}
