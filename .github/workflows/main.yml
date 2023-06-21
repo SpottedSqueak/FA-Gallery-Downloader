@@ -46,7 +46,7 @@ jobs:
         with:
           name: fa-gallery-downloader-${{github.ref_name}}.tgz
       - uses: actions/create-release@v1
-        name: create-release
+        id: create-release
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
