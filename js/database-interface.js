@@ -111,7 +111,8 @@ export function saveComments(comments) {
   ) 
   VALUES ${placeholder}
   ON CONFLICT(id) DO UPDATE SET
-    desc = excluded.desc
+    desc = excluded.desc,
+    date = excluded.date
   `, ...data);
 }
 export function saveFavorites(username, links) {
@@ -286,6 +287,12 @@ export function needsRepair(username) {
     username IS NULL
     OR rating IS NULL
     OR category IS NULL
+    OR date_uploaded LIKE '%ago%'
+    OR id IN (
+      SELECT submission_id
+      FROM commentdata
+      WHERE date LIKE '%ago%'
+    )
   )
   `);
 }

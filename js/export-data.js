@@ -10,7 +10,7 @@ function constructJSON(d) {
   return JSON.stringify({
     type: (/(png|jpg|gif|webp|jpeg)$/i.test(d.content_name)) ? 'image':'other',
     title: d.title || '',
-    date: new Intl.DateTimeFormat('en-US').format(new Date(d.date_uploaded)),
+    date: new Intl.DateTimeFormat('en').format(new Date(d.date_uploaded)),
     description: d.desc || '',
     tags: d.tags?.split(',') || [],
     rating: d.rating || 'General',

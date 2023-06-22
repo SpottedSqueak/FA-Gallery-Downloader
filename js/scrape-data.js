@@ -60,6 +60,11 @@ export async function scrapeComments($, submission_id, url) {
     .map((val) => {
       const $div = $(val);
       const isDeleted = $div.find('comment-container').hasClass('deleted-comment-container');
+      let date = '';
+      if (!isDeleted) {
+        date = $div.find('comment-date > span').attr('title').trim();
+        if (/ago/i.test(date)) date = $div.find('comment-date > span').text().trim();
+      }
       return {
         id: $div.find('.comment_anchor').attr('id'),
         submission_id,
@@ -67,7 +72,7 @@ export async function scrapeComments($, submission_id, url) {
         username: isDeleted ? '' : $div.find('comment-username').text().trim(),
         desc: isDeleted ? '' : $div.find('comment-user-text .user-submitted-links').html().trim(),
         subtitle: isDeleted ? '' : $div.find('comment-title').text().trim(),
-        date: isDeleted ? '' : $div.find('comment-date > span').attr('title'),
+        date,
       }
     });
   if(!comments.length) return;
@@ -97,6 +102,8 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
       continue;
     }
     // Get data if it does
+    let date = $('.submission-id-sub-container .popup_date').attr('title').trim();
+    if (/ago/i.test(date)) date = $('.submission-id-sub-container .popup_date').text().trim();
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],
       title: $('.submission-title').text().trim(),
@@ -105,7 +112,7 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
       tags: $('.tags-row').text().match(/([A-Z])\w+/gmi)?.join(','),
       content_name: $('.download > a').attr('href').split('/').pop(),
       content_url: $('.download > a').attr('href'),
-      date_uploaded: $('.submission-id-sub-container .popup_date').attr('title'),
+      date_uploaded: date,
       thumbnail_url: $('.page-content-type-text, .page-content-type-music').find('#submissionImg').attr('src') || '',
       rating: $('.rating .rating-box').first().text().trim(),
       category: $('.info.text > div > div').text().trim(),
