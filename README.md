@@ -11,7 +11,7 @@ Install: `npm i`
 
 Run: `npm run start`
 
-Build: 'npm run build:windows` | `npm run build:linux` | `npm run build:mac`
+Build: `npm run build:windows` | `npm run build:linux` | `npm run build:mac`
 
 Database is `sqlite` and can be read with something like [DB Browser](https://sqlitebrowser.org/)
 
