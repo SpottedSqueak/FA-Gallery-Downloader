@@ -420,7 +420,7 @@ export async function init() {
     }
   })
   .then(() => {
-    upgradeDatabase(db);
+    return upgradeDatabase(db);
   })
   .catch(async (e) => {
     console.error(e);
