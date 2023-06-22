@@ -2,7 +2,7 @@
 
 ### Dead simple gallery download for FurAffinity
 ---
-### [> Download Latest Release](https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases)
+### [> Download Latest Release <](https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases)
 ---
 ## Dev Info
 Built using `node v16.20.0` and `npm v8.19.4`
