@@ -1,4 +1,4 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, passUsername, passSearchName, passStartupInfo, getVersion, hideConsole } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, getVersion, hideConsole } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, FA_USER_BASE, RELEASE_CHECK } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
@@ -8,6 +8,7 @@ import { initGallery } from './js/view-gallery.js';
 import { join } from 'node:path';
 import open from 'open';
 import { setupBrowser } from './js/setup-browsers.js';
+import { init as exportData } from './js/export-data.js';
 
 const startupLink = join('file://', __dirname, './html/startup.html');
 
@@ -36,7 +37,7 @@ async function downloadPath(name = username, scrapeGallery = true, scrapeComment
   }
   // Scrape data from collected submission pages
   Promise.all([
-    scrapeSubmissionInfo(null, scrapeComments),
+    scrapeSubmissionInfo({ downloadComments: scrapeComments }),
     initDownloads(name),
   ]).then(() => {
     if(!stop.now) log('Requested downloads complete! ♥');
@@ -65,11 +66,10 @@ async function init() {
     if (choice === 'login') {
       if (!username) await handleLogin(browser);
       else await forceNewLogin(browser);
-      await passUsername();
-      await passSearchName(username);
+      await sendStartupInfo({ queryName: username});
     } else if (choice === 'start-download') {
       if (!username) await handleLogin(browser);
-      await passUsername();
+      await sendStartupInfo();
       const { name, scrapeGallery, scrapeComments, scrapeFavorites } = data;
       downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
     } else if (choice === 'view-gallery') {
@@ -88,30 +88,27 @@ async function init() {
       const inNeedOfRepair = await db.needsRepair();
       if (inNeedOfRepair.length) {
         logLast('Database incomplete! Working on that now...');
-        await scrapeSubmissionInfo(inNeedOfRepair, true)
+        await scrapeSubmissionInfo({ data: inNeedOfRepair, downloadComments: true })
           .finally(() => inProgress = false);
         if (!stop.now) logLast(`Database repaired!`);
-      } else logLast(`Database OK!`);
+      } else {
+        inProgress = false;
+        logLast(`Database OK!`);
+      }
     } else if (choice === 'export-data') {
-      const allUserData = await db.getAllSubmissionsForUser(data.name);
-      log(`[#TODO] Exporting ${allUserData.length} submissions for account: ${data.name}`);
+      exportData(data.name);
     }
   });
   page.on('domcontentloaded', async () => {
-    await passUsername();
-    let accounts = await db.getOwnedAccounts();
-    const data = {
-      accounts: accounts.map(a => a.username),
-      current: getVersion(),
-    };
+    const data = { current: getVersion() };
     let $ = await getHTML(RELEASE_CHECK, false);
     if ($) {
       const latest = $('a.Link--primary').first().text().replace('v', '');
       data.latest = latest;
     }
-    await passStartupInfo(data);
+    await sendStartupInfo(data);
   });
-  if (await checkIfLoggedIn(page)) await passUsername();
+  if (await checkIfLoggedIn(page)) await sendStartupInfo();
   await page.goto(startupLink);
   // Repair DB if needed
   await checkDBRepair();

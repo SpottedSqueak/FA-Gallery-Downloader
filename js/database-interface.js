@@ -14,6 +14,12 @@ function genericInsert(table, columns, placeholders, data) {
   VALUES ${placeholders.join(',')}
 `, ...data);
 }
+export function deleteSubmission(url) {
+  return db.exec(`
+    DELETE FROM subdata
+    WHERE url = '${url}'
+  `);
+}
 /**
  * Marks the given content_url as saved (downloaded).
  * @param {String} content_url 
@@ -237,27 +243,15 @@ export function getAllUnmovedContentData() {
  * @returns Database Promise that resolves to results of query
  */
 export function getAllUnsavedContent(name) {
-  const defaultQuery = `
+  const nameQuery = name ? `AND username LIKE '${name}'`:`AND username IS NOT NULL`;
+  return db.all(`
     SELECT content_url, content_name, username
     FROM subdata
     WHERE is_content_saved = 0
     AND content_url IS NOT NULL
-    AND username IS NOT NULL
+    ${nameQuery}
     ORDER BY content_name DESC
-  `;
-  if (!name) return db.all(defaultQuery);
-  const query =`
-    SELECT content_url, content_name, username
-    FROM subdata
-    WHERE is_content_saved = 0
-    AND content_url IS NOT NULL
-    AND username LIKE '${name}'
-    ORDER BY content_name DESC
-  `;
-  return db.all(query).then(results => {
-    if (!results?.content_name) return db.all(defaultQuery);
-    else return results;
-  });
+  `);
 }
 
 export function getAllUnsavedThumbnails() {
@@ -278,15 +272,19 @@ export function getAllUnsavedThumbnails() {
  * Returns all entries without necessary data.
  * @returns 
  */
-export function needsRepair() {
+export function needsRepair(username) {
+  let usernameQuery = '';
+  if (username) {
+    usernameQuery = `AND username = '${username}'`;
+  }
   return db.all(`
   SELECT url
   FROM subdata
   WHERE id IS NOT NULL
+  ${usernameQuery}
   AND (
     username IS NULL
     OR rating IS NULL
-    OR tags IS NULL
     OR category IS NULL
   )
   `);
@@ -306,11 +304,11 @@ export function getAllUsernames() {
  */
 export function getSubmissionLinks() {
   return db.all(`
-  SELECT rowid, url
-  FROM subdata
-  WHERE id IS null
-  ORDER BY url DESC
-  `);
+    SELECT url
+    FROM subdata
+    WHERE id IS null
+    ORDER BY url DESC
+    `);
 }
 
 export function getComments(id) {
@@ -326,7 +324,8 @@ export function getOwnedAccounts() {
   return db.all(`
     SELECT *
     FROM ownedaccounts
-  `);
+  `).then(results => results.map(a => a.username))
+    .catch(() => []);
 }
 
 export function getAllFavoritesForUser(username) {
@@ -348,6 +347,8 @@ export function getAllSubmissionsForUser(username) {
     FROM subdata
     WHERE username = '${username}'
     AND is_content_saved = 1
+    AND id IS NOT NULL
+    ORDER BY content_name ASC
   `);
 }
 /**

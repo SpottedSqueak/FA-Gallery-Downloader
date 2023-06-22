@@ -149,13 +149,9 @@ export async function urlExists(url, sendHeaders = true) {
   headers = {...headers, method: 'HEAD' };
   return got(url, headers).then(() => true).catch(() => false);
 }
-export function passUsername() {
-  return page.evaluate(`window.setUsername?.('${username}')`);
-}
-export function passSearchName(name) {
-  return page.evaluate(`window.setSearchName?.('${name}')`);
-}
-export function passStartupInfo(data) {
+export async function sendStartupInfo(data = {}) {
+  if (!data.username) data.username = username;
+  if (!data.accounts) data.accounts = await db.getOwnedAccounts();
   return page.evaluate(`window.setPageInfo?.(${JSON.stringify(data)})`);
 }
 /**

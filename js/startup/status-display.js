@@ -42,10 +42,7 @@ export default {
       return `[${this.data.value}/${this.data.max}]`;
     },
     computedFilename() {
-      if (!this.filename) return '';
-      const diff = this.filename.length - 30;
-      if (!diff) return this.filename;
-      return`...${this.filename.slice(diff)}`;
+      return this.filename;
     },
   },
   watch: {
@@ -59,14 +56,13 @@ export default {
       } else {
         this[val.bar].value = val.value;
         this[val.bar].max = val.max
-        this.filename = val.filename || '';
+        this.filename = val.filename || this.filename || '';
         const _this = this;
         const bar = val.bar
         if (val.value >= val.max) {
           setTimeout(() => {
             const cBar = _this[bar];
             cBar.value = 0;
-            if (bar === 'file') _this.filename = '';
           }, 500);
         }
       }

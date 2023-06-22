@@ -71,6 +71,9 @@ label + input {
 label + progress {
   margin-left: 8px;
 }
+li + li {
+  margin-top: 8px;
+}
 li > button {
   margin-left: 12px;
 }
@@ -168,6 +171,10 @@ li > button {
 }
 .account-list li {
   text-transform: capitalize;
+}
+.account-list li > span {
+  display: inline-block;
+  min-width: 25%;
 }
 /** Status styles */
 .status-container {

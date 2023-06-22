@@ -29,7 +29,7 @@ export default {
       <p>Login to an account to see it listed here!</p>
       <ul>
         <template v-for="name in accounts">
-          <li>{{name}} <button disabled @click.prevent="exportData(name)">Export</button></li>
+          <li><span>{{name}}</span> <button @click.prevent="exportData(name)">Export: Postybirb</button></li>
         </template>
       </ul>
     </div>

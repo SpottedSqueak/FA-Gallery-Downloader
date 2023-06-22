@@ -50,20 +50,16 @@ export default {
     window.logMsg = ({ text, id, replaceLast }) => {
       this.msg = { text, id, replaceLast };
     }
-    window.setUsername = (name) => {
-      this.username = name;
-    }
-    window.setSearchName = (name) => {
-      this.queryName = name;
-    }
     window.logProgress = ({ bar, value, max, reset, filename }) => {
-      // this.isActive = true;
+      if (!reset) this.isActive = !!value;
       this.logProgress = { bar, value, max, reset, filename };
     }
     window.setPageInfo = (data) => {
-      this.accounts = data.accounts;
-      this.version = data.current;
-      this.newVersion = data.latest;
+      if (data.queryName) this.queryName = data.queryName;
+      if (data.username) this.username = data.username;
+      if (data.accounts) this.accounts = data.accounts;
+      if (data.current) this.version = data.current;
+      if (data.latest) this.newVersion = data.latest;
     }
   },
   computed: {

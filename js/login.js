@@ -69,7 +69,7 @@ export async function handleLogin(newBrowser) {
   if (!await checkIfLoggedIn()) 
     await logInUser().catch(() => page = null);
   if(username) {
-    log(`User logged-in as: <b>${username}</b>`);
+    log(`User logged-in as: ${username}`);
     await setOwnedAccount(username);
   }
   page?.close();

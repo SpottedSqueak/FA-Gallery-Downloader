@@ -78,8 +78,8 @@ const metadataID = 'scrape-metadata';
  * Gathers all of the relevant metadata from all uncrawled submission pages.
  * @returns 
  */
-export async function scrapeSubmissionInfo(data = null, downloadComments) {
-  const links = data || await db.getSubmissionLinks();
+export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
+  let links = data || await db.getSubmissionLinks();
   if (!links.length || stop.now) return logProgress.reset(progressID);
   log(`[Data] Saving data for ${links.length} submissions...`, metadataID);
   let index = 0;
@@ -87,7 +87,15 @@ export async function scrapeSubmissionInfo(data = null, downloadComments) {
     logProgress({transferred: index+1, total: links.length}, progressID);
     let $ = await getHTML(links[index].url);
     // Check if submission still exists
-    if (!$ || !$('.submission-title').length) return;
+    if (!$ || !$('.submission-title').length) {
+      log(`[Error] Not found/deleted: ${links[index].url}`);
+      if(/system.error/i.test($('h2').text())) {
+        log(`[Error] Confirmed deleted, removing: ${links[index].url}`);
+        await db.deleteSubmission(links[index].url);
+      }
+      await waitFor(2000);
+      continue;
+    }
     // Get data if it does
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],
@@ -113,6 +121,6 @@ export async function scrapeSubmissionInfo(data = null, downloadComments) {
     index++;
     if (index % 2) await waitFor(1000);
   }
-  if (!stop.now) log('[Data] Save complete!');
+  if (!stop.now) log('[Data] All submission metadata saved!');
   logProgress.reset(progressID);
 }
