@@ -52,11 +52,11 @@ export default {
     },
     logProgress(val) {
       if (val.reset) {
-        this[val.bar].value = null;
+        this[val.bar].value = 0;
+        this[val.bar].max = 1;
       } else {
         this[val.bar].value = val.value;
         this[val.bar].max = val.max
-        this.filename = val.filename || this.filename || '';
         const _this = this;
         const bar = val.bar
         if (val.value >= val.max) {
@@ -65,6 +65,10 @@ export default {
             cBar.value = 0;
           }, 500);
         }
+      }
+      if (val.bar === 'file') {
+        if (!val.value) this.filename = '';
+        else this.filename = val.filename || this.filename;
       }
     },
   },

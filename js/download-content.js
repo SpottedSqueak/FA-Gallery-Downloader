@@ -17,8 +17,7 @@ function resetTotals() {
   totalFiles = 0;
   currFile = 0;
   currThumbnail = 0;
-  logProgress({ filename: '' }, progressID);
-  logProgress.reset(progressID)
+  logProgress({ filename: '', reset: true }, progressID);
 }
 function getTotals() {
   if (!totalFiles && !totalThumbnails)
