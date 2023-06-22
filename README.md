@@ -7,27 +7,38 @@
 ## Dev Info
 Built using `node v16.20.0` and `npm v8.19.4`
 
-To install: `npm i`
+Install: `npm i`
 
-To run locally, just use `npm run start`
+Run: `npm run start`
 
-NOTE: You'll need a **valid, up-to-date Chromium/Chrome install** for this to work, as the program opens a browser instance to allow for login to FA. **Why is this?** A lot of users have their galleries hidden from site visitors, so this is the easiest way to consistently ensure access to galleries. This is done almost the exact same way [Postybirb](https://www.postybirb.com/) does it! Just that I don't embed a version of Chromium in this project (you can get one if you'd like on your own).
+Build: 'npm run build:windows` | `npm run build:linux` | `npm run build:mac`
 
-You'll need [Caxa](https://www.npmjs.com/package/caxa) to build the application bundle for your OS. Then run `npm run build:windows` | `npm run build:mac` | `npm run build:linux` to build for those environments (I currently only have access to Windows, sorry!).
+Database is `sqlite` and can be read with something like [DB Browser](https://sqlitebrowser.org/)
 
-***Other bundlers may work***, but I had a lot of trouble with `pkg`, which oddly doesn't seem to support ES6 syntax.
+## Info
 
-~~This could easily be expanded to download other galleries (of course), and if there's demand for it I can add that in.~~ Downloading other galleries is fully supported! My goal was for folks to use this to download and backup their own galleries originally.
+You login, type in an FA username, pick your options, and go. It will display download progress, and any messages associated with the download. You can stop and resume later at any point. 
+
+The gallery information is saved in the containing folder under `fa_gallery_downloader`, with all content saved in `/fa_gallery_downloader/downloaded_content` folder, placed in the same folder as the executable. The database has all of the related submission metadata.
+
+You can browse via the file system, or the *slick built-in replica-FA gallery viewer.* It's up to you!
+
+***NOTE:*** You'll need a **valid, up-to-date Chromium/Chrome install** for this to work. If you do not have one, the program will download the latest Chromium build for you, much like [Electron](https://www.electronjs.org/) does. I don't download it by default to save bandwidth and time (and most folks have some version of it installed already).
+
+***Why is a browser needed?*** A lot of users have their galleries hidden from site visitors, so this is the easiest way to consistently ensure access to galleries. This is done almost the exact same way [Postybirb](https://www.postybirb.com/) does it! Futhermore, the login is used to determine if the gallery you're downloading is one that you own, for future uploading to other sites via Postybirb importing.
+
+You'll need [Caxa](https://www.npmjs.com/package/caxa) to build the application bundle for your OS. Then run one of the build commands listed above to build for those environments (tested in Windows and Linux/Ubuntu). Or just download the latest from the Releases, whatever's easiest.
+
 
 ## How it works
 
-Boot it up to open a window to either the FA login page, or to the status window showing the program progress (depending on if you've logged in previous or ). It will then walk through your gallery, first the main gallery and then scraps, collecting all of the submission links present. Once complete, it will start visiting and collecting metadata (title, description, tags, etc.) for each submission, as well as queuing staggered downloads of the content for each submission.
+Start the program, login, choose a gallery and go. It will then walk through the gallery, first the main gallery and then scraps, collecting all of the submission links present. Once complete, it will start visiting and collecting metadata (title, description, tags, etc.) for each submission, as well as queuing staggered downloads of the content for each submission. I do this to prevent being blocked on FA's site.
 
 The downloaded submissions can be found in the `/fa_gallery_downloader/downloaded_content` folder, placed in the same folder as the executable.
 
 It supports resuming, as it can take upwards of half an hour to fully download large galleries (possibly more).
 
-I plan to work on this more when I have time, but I'm a pretty busy guy! At the very least, the below #ToDo of adding in locally browseable files would be ideal.
+I hope it helps, it's always a good idea to not put all your eggs in one basket.
 
 
 ## #DONE
@@ -39,12 +50,12 @@ I plan to work on this more when I have time, but I'm a pretty busy guy! At the 
 - [x] Log errors to file (Found under `/fa_gallery_downloader/logs`)
 - [x] Clean up the interface some (better logging, download animations/progress bars)
 - [x] Add a locally browsable copy of the given FA gallery (includes SEARCH!)
+- [x] Export data for Postybirb+ integration
+- [x] ~~Format description text to BBCode for ease of cross posting (Maybe?)~~ Postybirb integration negates this point
 - [x] ~~Skip submission link gathering when traversing previously traversed galleries (yes, that makes sense)~~ (Not possible with how FA galleries work)
 ## #TODO
 
 - [ ] Fix comic navigation so you can move between them inside of the gallery viewer
-- [ ] Format description text to BBCode for ease of cross posting (Maybe?)
-- [ ] Export data to JSON/CSV files (Possible Postbirb+ integration?)
 
 
 Check out my stuff on FA if you'd like!
