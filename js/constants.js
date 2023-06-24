@@ -1,6 +1,7 @@
 export const FA_URL_BASE = 'https://www.furaffinity.net';
 export const FA_USER_BASE = FA_URL_BASE + '/user/';
 export const FA_LOGIN = FA_URL_BASE + '/login';
+export const FA_SETTINGS = FA_URL_BASE + '/controls/settings';
 export const DEFAULT_BROWSER_PARAMS = [
   '--app=data:text/html, "Loading..."',
   '--window-size=1280,720',

@@ -1,7 +1,7 @@
 import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, getVersion, hideConsole } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, FA_USER_BASE, RELEASE_CHECK } from './js/constants.js';
-import { checkIfLoggedIn, handleLogin, forceNewLogin, username } from './js/login.js';
+import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { cleanupFileStructure, initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
@@ -64,11 +64,13 @@ async function init() {
     const { choice } = data;
     stop.reset();
     if (choice === 'login') {
-      if (!username) await handleLogin(browser);
+      if (!await checkIfLoggedIn(browser)) await handleLogin();
       else await forceNewLogin(browser);
+      await checkForOldTheme();
       await sendStartupInfo({ queryName: username});
     } else if (choice === 'start-download') {
-      if (!username) await handleLogin(browser);
+      if (!await checkIfLoggedIn(browser)) await handleLogin();
+      await checkForOldTheme();
       await sendStartupInfo();
       const { name, scrapeGallery, scrapeComments, scrapeFavorites } = data;
       downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
@@ -108,7 +110,7 @@ async function init() {
     }
     await sendStartupInfo(data);
   });
-  if (await checkIfLoggedIn(page)) await sendStartupInfo();
+  if (await checkIfLoggedIn(browser)) await sendStartupInfo();
   await page.goto(startupLink);
   // Repair DB if needed
   await checkDBRepair();

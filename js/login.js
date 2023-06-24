@@ -1,4 +1,4 @@
-import { FA_URL_BASE, FA_LOGIN } from "./constants.js";
+import { FA_URL_BASE, FA_LOGIN, FA_SETTINGS } from "./constants.js";
 import { setOwnedAccount } from "./database-interface.js";
 import { getHTML, log, logLast } from "./utils.js";
 
@@ -14,7 +14,31 @@ function setRequestHeaders(faCookies) {
     }
   };
 }
-
+export async function checkForOldTheme(page) {
+  const $ = await getHTML(FA_URL_BASE);
+  if (/classic/i.test($('body').data('static-path'))) {
+    log(`[Warn] Using incompatible old FA theme, prompting user to update settings`);
+    page = await browser.newPage();
+    page.setDefaultNavigationTimeout(30000);
+    page.on('close', () => {
+      checkForOldTheme();
+    });
+    await page.goto(FA_SETTINGS);
+    await page.$eval('.template-change', el => {
+      el.value = 'beta';
+    });
+    await page.$eval('.confirm-pass input[type="password"]', el => {
+      el.parentElement.scrollIntoView();
+      el.style.outline = '2px solid red';
+      alert('[Data] User theme changed, enter password to save settings!');
+    })
+    await page.waitForNavigation();
+    return checkForOldTheme(page);
+  }
+  log(`[Data] FA Modern theme confirmed!`);
+  page?.close();
+  page = null;
+}
 function setUsername($) {
   // Need to get username for loggedin user
   let href = $('a[href^="/user"]').first().attr('href');
@@ -31,8 +55,9 @@ async function checkIfCookiesExpired() {
   return notLoggedIn;
 }
 
-export async function checkIfLoggedIn(...queryPage) {
-  queryPage = queryPage[0] || await browser.pages().then(p => p[0]);
+export async function checkIfLoggedIn(newBrowser) {
+  browser = browser || newBrowser;
+  const queryPage = page || await browser.pages().then(p => p[0]);
   const cookies = await queryPage.cookies(FA_URL_BASE);
   const loggedInCookies = { a: false, b: false };
   cookies.forEach(val => {
@@ -63,7 +88,7 @@ export async function forceNewLogin(browser) {
   return handleLogin(browser);
 }
 
-export async function handleLogin(newBrowser) {
+export async function handleLogin(newBrowser = browser) {
   browser = browser || newBrowser;
   // Get credentials
   log('Checking logged in status...');
