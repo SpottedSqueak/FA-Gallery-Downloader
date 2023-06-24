@@ -16,8 +16,9 @@ function setRequestHeaders(faCookies) {
 }
 
 function setUsername($) {
-  const href = $('img.loggedin_user_avatar')
-  .parent().attr('href');
+  // Need to get username for loggedin user
+  let href = $('a[href^="/user"]').first().attr('href');
+  href.replace('#', '');
   if (!href) return false;
   username = href.split('user/')[1].split('/')[0];
   return username;
