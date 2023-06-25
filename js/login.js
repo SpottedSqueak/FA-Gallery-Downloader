@@ -31,7 +31,7 @@ export async function checkForOldTheme(page) {
     await page.$eval('.confirm-pass input[type="password"]', el => {
       el.parentElement.scrollIntoView();
       el.style.outline = '2px solid red';
-      alert('[Data] User theme changed, enter password to save settings!');
+      alert('[Data] Modern/beta FA theme required, enter password to switch to the Modern theme!');
     })
     await new Promise((resolve, reject) => {
       resolver = resolve;
