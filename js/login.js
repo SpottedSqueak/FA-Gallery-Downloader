@@ -19,9 +19,10 @@ export async function checkForOldTheme(page) {
   if (/classic/i.test($('body').data('static-path'))) {
     log(`[Warn] Using incompatible old FA theme, prompting user to update settings`);
     page = await browser.newPage();
-    page.setDefaultNavigationTimeout(30000);
-    page.on('close', () => {
-      checkForOldTheme();
+    page.setDefaultNavigationTimeout(0);
+    let resolver = () => {};
+    page.once('close', () => {
+      resolver();
     });
     await page.goto(FA_SETTINGS);
     await page.$eval('.template-change', el => {
@@ -32,7 +33,10 @@ export async function checkForOldTheme(page) {
       el.style.outline = '2px solid red';
       alert('[Data] User theme changed, enter password to save settings!');
     })
-    await page.waitForNavigation();
+    await new Promise((resolve, reject) => {
+      resolver = resolve;
+      page.waitForNavigation().then(resolve).catch(reject);
+    });
     return checkForOldTheme(page);
   }
   log(`[Data] FA Modern theme confirmed!`);
@@ -74,8 +78,15 @@ async function logInUser() {
   page.setDefaultNavigationTimeout(0);
   logLast('Not logged in! Requesting user to do so...');
   await page.goto(FA_LOGIN);
+  let resolver = () => {};
+  page.once('close', () => {
+    resolver();
+  });
   while (/login/i.test(await page.url())) {
-    await page.waitForNavigation();
+    await new Promise((resolve, reject) => {
+      resolver = resolve;
+      page.waitForNavigation().then(resolve).catch(reject);
+    });
   }
   await checkIfLoggedIn();
 }
