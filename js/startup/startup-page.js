@@ -24,13 +24,13 @@ export default {
         <span v-if="!version">Loading version...</span>
         <template v-else>
           <template v-if="hasUpdate">
-            <a class="has-update" href="https://github.com/SpottedSqueak/FA-Gallery-Downloader" @click.prevent="open">Update available!</a> | 
+            <a class="has-update" :href="githubLink" @click.prevent="open">Update available!</a> | 
           </template>
           <span>Current: <b>{{version}}</b></span>
           <span v-if="showVersion"> | Latest: <b>{{newVersion}}</b></span>
         </template>
         |
-        <a href="https://github.com/SpottedSqueak/FA-Gallery-Downloader" @click.prevent="open"><b>Github Repo</b></a>
+        <a :href="githubLink" @click.prevent="open"><b>Github Repo</b></a>
       </div>
     </div>
   `,
@@ -44,6 +44,7 @@ export default {
       accounts: [],
       version: '',
       newVersion: '',
+      githubLink: 'https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases',
     };
   },
   beforeCreate() {
