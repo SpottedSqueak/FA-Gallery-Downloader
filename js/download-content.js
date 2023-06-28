@@ -1,3 +1,4 @@
+import random from 'random';
 import { waitFor, log, logProgress, stop, getHTML, urlExists } from './utils.js';
 import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
@@ -152,11 +153,11 @@ async function startContentDownloads(name) {
     if (stop.now) return;
     await downloadSpecificContent(data[i]);
     if (!thumbnailsRunning) startThumbnailDownloads();
-    await waitFor(2000);
+    await waitFor(random.int(2000, 4000));
     i++;
     currFile = i + 1;
   }
-  await waitFor(2000);
+  await waitFor(random.int(2000, 4000));
   return startContentDownloads(name);
 }
 export async function startUserContentDownloads(data) {
@@ -166,7 +167,7 @@ export async function startUserContentDownloads(data) {
   while (i < data.length) {
     if (stop.now) break;
     await downloadSpecificContent(data[i]);
-    await waitFor(2000);
+    await waitFor(random.int(2000, 4000));
     i++;
     currFile = i + 1;
   }
@@ -184,11 +185,11 @@ async function startThumbnailDownloads() {
   while (i < data.length) {
     if (stop.now) return thumbnailsRunning = false;
     await downloadThumbnail(data[i]);
-    await waitFor(1000);
+    await waitFor(random.int(1000, 2500));
     i++;
     currThumbnail = i + 1;
   }
-  await waitFor(2000);
+  await waitFor(random.int(2000, 3500));
   return startThumbnailDownloads();
 }
 

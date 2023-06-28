@@ -1,3 +1,4 @@
+import random from 'random';
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
 import { log, logProgress, waitFor, getHTML, stop } from './utils.js';
@@ -42,7 +43,7 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
       if (nextPage) nextPage = url.split('/favorite')[0] + nextPage;
       else break;
     }
-    await waitFor();
+    await waitFor(random.int(1000, 2500));
   }
   if (!stop.now) log(`[Data] ${currLinks} submissions found!`);
   logProgress.reset(progressID);
@@ -98,7 +99,7 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
         log(`[Error] Confirmed deleted, removing: ${links[index].url}`);
         await db.deleteSubmission(links[index].url);
       }
-      await waitFor(2000);
+      await waitFor(random.int(2000, 3500));
       continue;
     }
     // Get data if it does
@@ -126,7 +127,7 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
     // Save comments
     if (downloadComments) await scrapeComments($, data.id);
     index++;
-    if (index % 2) await waitFor(1000);
+    if (index % 2) await waitFor(random.int(1000, 2500));
   }
   if (!stop.now) log('[Data] All submission metadata saved!');
   logProgress.reset(progressID);

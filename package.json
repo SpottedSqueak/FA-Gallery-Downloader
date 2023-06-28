@@ -29,6 +29,7 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "random": "^4.1.0",
     "sqlite": "^4.2.1",
     "sqlite3": "^5.1.6"
   },
