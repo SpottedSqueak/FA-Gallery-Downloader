@@ -94,17 +94,19 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
     let $ = await getHTML(links[index].url);
     // Check if submission still exists
     if (!$ || !$('.submission-title').length) {
-      log(`[Error] Not found/deleted: ${links[index].url}`);
-      if(/system.error/i.test($('h2').text())) {
+      if($ && $('.section-body').text().includes('The submission you are trying to find is not in our database.')) {
         log(`[Error] Confirmed deleted, removing: ${links[index].url}`);
         await db.deleteSubmission(links[index].url);
+        index++;
+      } else {
+        log(`[Error] Not found/deleted: ${links[index].url}`);
       }
       await waitFor(random.int(2000, 3500));
       continue;
     }
     // Get data if it does
     let date = $('.submission-id-sub-container .popup_date').attr('title').trim();
-    if (/ago/i.test(date)) date = $('.submission-id-sub-container .popup_date').text().trim();
+    if (/ago$/i.test(date)) date = $('.submission-id-sub-container .popup_date').text().trim();
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],
       title: $('.submission-title').text().trim(),

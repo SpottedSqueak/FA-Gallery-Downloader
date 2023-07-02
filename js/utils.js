@@ -141,7 +141,10 @@ export function getHTML(url, sendHeaders = true) {
   return got(url, headers).text().then((result) => {
     console.log(`Loaded: ${url}`);
     return cheerio.load(result);
-  }).catch((e) => console.error(e));
+  }).catch((e) => {
+    console.error(e);
+    return false;
+  });
 }
 
 export async function urlExists(url, sendHeaders = true) {
