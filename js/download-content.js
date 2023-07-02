@@ -131,11 +131,8 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, usernam
   const content_name = content_url.split('/').pop();
   const downloadLocation = `${downloadDir}/${username}/thumbnail`;
   return downloadSetup({ content_url, content_name, downloadLocation })
-    .then((fileSaved) => {
-      if (fileSaved === false) return db.setThumbnailSaved(contentUrl, '', '');
-      return db.setThumbnailSaved(contentUrl, content_url, content_name);
-    })
-    .catch(() => {/** No need to record, just ignore */});
+    .then(() => db.setThumbnailSaved(contentUrl, content_url, content_name))
+    .catch(() => db.setThumbnailSaved(contentUrl, '', ''));
 }
 /**
  * Gets all download urls and records when they're done.
