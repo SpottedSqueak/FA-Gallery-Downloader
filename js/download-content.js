@@ -65,7 +65,7 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
     });
   } else {
     console.warn(`File '${content_name} does not exist!`);
-    return false;
+    return Promise.reject();
   }
 }
 
