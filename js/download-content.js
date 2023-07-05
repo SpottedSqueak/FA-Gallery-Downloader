@@ -33,6 +33,12 @@ function getTotals() {
  * @returns 
  */
 async function downloadSetup({ content_url, content_name, downloadLocation }) {
+  // Check for invalid file types to start
+  if (/\.$/.test(content_name)) {
+    log(`[Data] Skipping invalid file: ${content_name}`);
+    await db.setContentNotSaved(content_url);
+    return Promise.reject();
+  }
   // Check to see if this file even exists by checking the header response
   if (await urlExists(content_url)) {
     return new Promise((resolve, reject) => {
@@ -104,9 +110,14 @@ export async function cleanupFileStructure() {
 
 export async function deleteInvalidFiles() {
   const brokenFiles = await db.getAllInvalidFiles();
+  if (brokenFiles.length)
+    log(`[Warn] There are ${brokenFiles.length} invalid files. Deleting...`);
   for (let i = 0; i < brokenFiles.length; i++) {
     const f = brokenFiles[i];
-    console.log(f);
+    const { username, content_name, content_url } = f;
+    const location = `${downloadDir}/${username}/${content_name}`;
+    await fs.remove(location);
+    await db.setContentNotSaved(content_url);
   }
 }
 

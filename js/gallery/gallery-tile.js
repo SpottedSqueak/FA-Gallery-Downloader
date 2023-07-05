@@ -55,7 +55,8 @@ export default {
       return `${this.contentPath}\\${this.username}\\${this.content_name}`;
     },
     fileExtension() {
-      return this.content_name.split('.').pop().toUpperCase();
+      const fileExtension = this.content_name.split('.').pop().toUpperCase();
+      return fileExtension ? fileExtension : '???';
     },
     relativeDate() {
       return getRelativeTime(+new Date(this.date_uploaded));

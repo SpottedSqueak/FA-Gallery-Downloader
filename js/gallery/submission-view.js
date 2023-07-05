@@ -12,6 +12,7 @@ export default {
           <object v-else-if="isTxt" class="pdf-embed txt" :data="computedContentPath" type="text/plain" @error="error = true"></object>
           <audio v-else-if="isMusic" class="music-embed" controls :src="computedContentPath" @error="error = true"></audio>
           <div v-else-if="isDoc" class="download-link" @click="openInNewWindow">Content not embedded. Download to view!</div>
+          <div v-else-if="isUnknown" class="music-embed">Invalid/Blank filetype: "{{submission.content_name}}"<br>This file cannot be displayed or downloaded, due to it's missing filetype</div>
           <div v-else class="download-link" @click="downloadContent">Content not downloaded!<br>Download now?</div>
         </div>
         <div class="submission-metadata">
@@ -122,6 +123,9 @@ export default {
         && /(mp3|wav|ogg)$/i.test(this.submission.content_name)
       );
     },
+    isUnknown() {
+      return /\.$/i.test(this.submission.content_name);
+    },
     computedContentPath() {
       return `${this.contentPath}\\${this.submission.username}\\${this.submission.content_name}`;
     },
@@ -155,7 +159,8 @@ export default {
     getCleanDesc(desc = '') {
       return desc
         .replace(/"\/\//gi, '"https://')
-        .replace(/"\/user/gi, '"https://www.furaffinity.net/user');
+        .replace(/"\/user/gi, '"https://www.furaffinity.net/user')
+        .replace(/img src/gi, `img onerror='this.src="../html/resources/_default.gif"' src`);
     },
     getCommentDate(date) {
       return getRelativeTime(+new Date(date));

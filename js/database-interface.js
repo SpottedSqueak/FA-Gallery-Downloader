@@ -34,6 +34,20 @@ export function setContentSaved(content_url) {
   WHERE content_url = '${content_url}'
   `);
 }
+/**
+ * Marks the given content_url as not saved (invalid file).
+ * @param {String} content_url 
+ * @returns Database Promise
+ */
+export function setContentNotSaved(content_url) {
+  return db.run(`
+  UPDATE subdata
+  SET
+    is_content_saved = 0,
+    moved_content = 1
+  WHERE content_url = '${content_url}'
+  `);
+}
 export function setContentMoved(content_name) {
   return db.run(`
   UPDATE subdata
@@ -250,6 +264,7 @@ export function getAllUnsavedContent(name) {
     FROM subdata
     WHERE is_content_saved = 0
     AND content_url IS NOT NULL
+    AND content_name NOT LIKE '%.'
     ${nameQuery}
     ORDER BY content_name DESC
   `);
@@ -375,7 +390,7 @@ export function getAllCompleteSubmissionData() {
 
 export function getAllInvalidFiles() {
   return db.all(`
-    SELECT id, content_name, username
+    SELECT id, content_name, content_url, username
     FROM subdata
     WHERE content_name LIKE '%.'
     AND is_content_saved = 1
