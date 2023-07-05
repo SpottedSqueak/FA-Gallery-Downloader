@@ -63,6 +63,11 @@ export default {
       if (data.latest) this.newVersion = data.latest;
     }
   },
+  mounted() {
+    setInterval(() => {
+      window.userPath({ choice: 'release-check'});
+    }, 10 * 60 * 1000);
+  },
   computed: {
     loggedInName() {
       return this.username || '???';

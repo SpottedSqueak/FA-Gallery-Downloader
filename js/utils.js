@@ -7,7 +7,7 @@ import fs from 'fs-extra';
 import * as db from './database-interface.js';
 import util from 'util';
 import { exitCode, default as process, platform } from 'node:process';
-import { LOG_DIR as logDir } from './constants.js';
+import { RELEASE_CHECK, LOG_DIR as logDir } from './constants.js';
 
 export const isWindows = platform === 'win32';
 export const isMac = platform === 'darwin';
@@ -138,7 +138,9 @@ export async function log(text, id, noConsole) {
  */
 export function getHTML(url, sendHeaders = true) {
   const headers = sendHeaders ? faRequestHeaders : {};
-  return got(url, headers).text().then((result) => {
+  headers.timeout = { response: 1000 };
+  return got(url, headers).text()
+  .then((result) => {
     console.log(`Loaded: ${url}`);
     return cheerio.load(result);
   }).catch((e) => {
@@ -146,10 +148,22 @@ export function getHTML(url, sendHeaders = true) {
     return false;
   });
 }
-
+/**
+ * Checks Github for the latest version.
+ * @returns {Object}
+ */
+export async function releaseCheck() {
+  const data = { current: getVersion() };
+  let $ = await getHTML(RELEASE_CHECK, false);
+  if ($) {
+    const latest = $('a.Link--primary').first().text().replace('v', '');
+    data.latest = latest;
+  }
+  return data;
+}
 export async function urlExists(url, sendHeaders = true) {
   let headers = sendHeaders ? faRequestHeaders : {};
-  headers = {...headers, method: 'HEAD' };
+  headers = {...headers, method: 'HEAD', timeout: { response: 1000 }};
   return got(url, headers).then(() => true).catch(() => false);
 }
 export async function sendStartupInfo(data = {}) {

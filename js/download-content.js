@@ -102,6 +102,14 @@ export async function cleanupFileStructure() {
   log(`[Data] Files reorganized by user!`);
 }
 
+export async function deleteInvalidFiles() {
+  const brokenFiles = await db.getAllInvalidFiles();
+  for (let i = 0; i < brokenFiles.length; i++) {
+    const f = brokenFiles[i];
+    console.log(f);
+  }
+}
+
 /**
  * Downloads the specified content.
  * @returns 

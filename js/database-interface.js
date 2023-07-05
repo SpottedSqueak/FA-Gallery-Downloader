@@ -373,6 +373,14 @@ export function getAllCompleteSubmissionData() {
   return db.all('SELECT * from subdata WHERE id IS NOT NULL');
 }
 
+export function getAllInvalidFiles() {
+  return db.all(`
+    SELECT id, content_name, username
+    FROM subdata
+    WHERE content_name LIKE '%.'
+    AND is_content_saved = 1
+  `);
+}
 
 
 export async function getUserSettings() {

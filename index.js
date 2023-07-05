@@ -1,9 +1,9 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, getVersion, hideConsole } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, hideConsole, urlExists, releaseCheck } from './js/utils.js';
 import * as db from './js/database-interface.js';
-import { FA_URL_BASE, FA_USER_BASE, RELEASE_CHECK } from './js/constants.js';
+import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
-import { cleanupFileStructure, initDownloads } from './js/download-content.js';
+import { cleanupFileStructure, deleteInvalidFiles, initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
 import { join } from 'node:path';
 import open from 'open';
@@ -49,6 +49,7 @@ async function checkDBRepair() {
   if (needsRepair.length)
     log(`[Data] Database in need of repair:  ${needsRepair.length} submissions have incomplete data.`);
   await cleanupFileStructure();
+  await deleteInvalidFiles();
 }
 
 async function init() {
@@ -99,19 +100,17 @@ async function init() {
       }
     } else if (choice === 'export-data') {
       exportData(data.name);
+    } else if (choice === 'release-check') {
+      sendStartupInfo(await releaseCheck());
     }
   });
   page.on('domcontentloaded', async () => {
-    const data = { current: getVersion() };
-    let $ = await getHTML(RELEASE_CHECK, false);
-    if ($) {
-      const latest = $('a.Link--primary').first().text().replace('v', '');
-      data.latest = latest;
-    }
-    await sendStartupInfo(data);
+    await sendStartupInfo(await releaseCheck());
   });
-  if (await checkIfLoggedIn(browser)) await sendStartupInfo();
   await page.goto(startupLink);
+  const isFAUp = await urlExists(FA_URL_BASE);
+  if (isFAUp && await checkIfLoggedIn(browser)) await sendStartupInfo();
+  if (!isFAUp) log(`[Warn] FA appears to be down, try again later`);
   // Repair DB if needed
   await checkDBRepair();
 }
