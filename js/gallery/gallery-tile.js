@@ -8,7 +8,7 @@ export default {
         <div class="gallery-tile__thumbnail_wrapper">
           <div v-if="error" class="gallery-tile__thumbnail-other">⚠ ERROR! ⚠<br>Possible<br>corrupt file!</div>
           <img v-else-if="isImg" :class="{'too-wide': isTooWide, 'too-small': isTooSmall }" :src="computedImgPath" @load="onImgLoad" @error="onError"/>
-          <div v-else-if="!is_content_saved" class="gallery-tile__thumbnail-other not-downloaded"><span>File not yet downloaded!<br>Type: {{fileExtension}}</span></div>
+          <div v-else-if="!is_content_saved" class="gallery-tile__thumbnail-other not-downloaded"><span>File not downloaded!<br>Type: {{fileExtension}}</span></div>
           <div v-else class="gallery-tile__thumbnail-other file-type"><span>Filetype:<br>{{fileExtension}}</span></div>
         </div>
       </div>

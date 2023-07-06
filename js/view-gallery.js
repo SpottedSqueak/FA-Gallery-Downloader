@@ -51,8 +51,6 @@ export async function initGallery(browser) {
   await page.exposeFunction('getContentPath', () => contentPath);
   page.on('domcontentloaded', sendData);
   await page.goto(galleryLink);
-  // Gather data
-  sendData();
   page.on('console', msg => {
     const text = msg.text();
     if(/you are running/i.test(text)) return;
