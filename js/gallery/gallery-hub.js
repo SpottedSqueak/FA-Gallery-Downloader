@@ -14,7 +14,9 @@ export default {
     <transition>
       <div v-show="!submissionData" class="gallery-container">
         <h2 class="gallery-title">🐾FA Gallery Viewer 🐾</h2>
-        <gallery-controls @start-search="startSearch" :outside-username="outsideUsername"></gallery-controls>
+        <gallery-controls @start-search="startSearch" :outside-username="outsideUsername"
+        :outside-fav-usernames="favUsernames"
+        :outside-usernames="usernames"></gallery-controls>
         <div class="gallery-navigation">
           <button class="gallery-prev" :disabled="!offset" @click="previous">Prev</button>
           <h2 class="gallery-search-title">{{galleryTitle}}</h2>
@@ -53,7 +55,15 @@ export default {
       query: {},
       outsideUsername: '',
       sortOrder: 'DESC',
+      favUsernames: [],
+      usernames: [],
     };
+  },
+  beforeCreate() {
+    window.setPageInfo = (data) => {
+      if (data.favUsernames) this.favUsernames = data.favUsernames;
+      if (data.usernames) this.usernames = data.usernames;
+    }
   },
   mounted() {
     history.replaceState('', null, location.href.split('#')[0]);

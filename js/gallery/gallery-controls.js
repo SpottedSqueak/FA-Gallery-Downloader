@@ -1,19 +1,25 @@
 export default {
   name: 'gallery-controls',
   emits: ['startSearch'],
-  props: ['outsideUsername'],
+  props: ['outsideUsername', 'outsideFavUsernames', 'outsideUsernames'],
   template: `
     <div class="gallery-controls">
       <div class="gallery-controls__search-container">
         <label for="galleryType">Gallery:</label>
         <select id="galleryType" v-model="galleryType" @change="startSearch">
           <option value="">Main</option>
-          <option :disabled="!username" value="favorites">Favorites</option>
+          <option value="favorites">Favorites</option>
         </select>
       </div>
       <div class="gallery-controls__search-container">
         <label for="username">User:</label>
-        <input id="username" ref="username" type="text" placeholder="Username?" v-model="username" @input="startSearch" />
+        <input id="username" list="favList" ref="username" type="text" placeholder="Username?" v-model="username" @input="startSearch"
+        autocomplete="off" />
+        <datalist id="favList">
+          <optgroup label="Choose a Username below:">
+            <option v-for="n in listInfo">{{n.username}}</option>
+          </optgroup>
+        </datalist>
       </div>
       <div class="gallery-controls__search-container">
         <label for="search">Search:</label>
@@ -26,6 +32,8 @@ export default {
       search: '',
       username: '',
       galleryType: '',
+      favUsernames: [],
+      usernames: [],
     };
   },
   watch: {
@@ -33,6 +41,17 @@ export default {
       this.username = newName;
       this.galleryType = '';
       this.startSearch();
+    },
+    outsideFavUsernames(newNames) {
+      this.favUsernames = newNames;
+    },
+    outsideUsernames(newNames) {
+      this.usernames = newNames;
+    }
+  },
+  computed: {
+    listInfo() {
+      return this.galleryType ? this.favUsernames : this.usernames; 
     }
   },
   methods: {

@@ -11,6 +11,13 @@ const contentPath = resolve('file://', '../fa_gallery_downloader/downloaded_cont
 
 let page = null;
 
+async function sendData() {
+  const data = {
+    favUsernames: await db.getAllFavUsernames(),
+    usernames: await db.getAllUsernames(),
+  };
+  await page.evaluate(`window.setPageInfo?.(${JSON.stringify(data)})`);
+}
 export async function initGallery(browser) {
   if (page) return;
   page = await browser.newPage();
@@ -42,7 +49,10 @@ export async function initGallery(browser) {
     if (url) open(url);
   });
   await page.exposeFunction('getContentPath', () => contentPath);
+  page.on('domcontentloaded', sendData);
   await page.goto(galleryLink);
+  // Gather data
+  sendData();
   page.on('console', msg => {
     const text = msg.text();
     if(/you are running/i.test(text)) return;

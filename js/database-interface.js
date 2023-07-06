@@ -311,11 +311,20 @@ export function needsRepair(username) {
   )
   `);
 }
+export function getAllFavUsernames() {
+  return db.all(`
+    SELECT DISTINCT username
+    FROM favorites
+    WHERE username IS NOT NULL
+    ORDER BY username ASC
+  `);
+}
 export function getAllUsernames() {
   return db.all(`
-  SELECT DISTINCT username
-  FROM subdata
-  WHERE username IS NOT NULL
+    SELECT DISTINCT username
+    FROM subdata
+    WHERE username IS NOT NULL
+    ORDER BY username ASC
   `);
 }
 
