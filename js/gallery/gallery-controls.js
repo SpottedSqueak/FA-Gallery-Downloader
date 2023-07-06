@@ -13,9 +13,9 @@ export default {
       </div>
       <div class="gallery-controls__search-container">
         <label for="username">User:</label>
-        <input id="username" list="favList" ref="username" type="text" placeholder="Username?" v-model="username" @input="startSearch"
+        <input id="username" list="usernameList" ref="username" type="text" placeholder="Username?" v-model="username" @input="startSearch"
         autocomplete="off" />
-        <datalist id="favList">
+        <datalist id="usernameList">
           <optgroup label="Choose a Username below:">
             <option v-for="n in listInfo">{{n.username}}</option>
           </optgroup>
