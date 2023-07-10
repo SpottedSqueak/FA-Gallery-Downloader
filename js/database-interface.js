@@ -203,13 +203,16 @@ export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='D
       AND url IN (
         SELECT url
         FROM favorites f
-        WHERE f.username LIKE '%${username}%'
+        WHERE f.username LIKE '%${username.replace(/_/g, '%')}%'
       )
     `;
   } else {
     if (username) {
       usernameQuery = `
-        AND username LIKE '%${username}%'
+        AND (
+          username LIKE '%${username}%'
+          OR account_name LIKE '%${username}%'
+        )
         `;
     }
   }
@@ -218,6 +221,7 @@ export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='D
     id, 
     title,
     username,
+    account_name,
     content_name,
     content_url,
     date_uploaded,
@@ -257,7 +261,7 @@ export async function getSubmissionPage(id) {
 
 export function getAllUnmovedContentData() {
   return db.all(`
-  SELECT content_url, content_name, username
+  SELECT content_url, content_name, username, account_name
   FROM subdata
   WHERE is_content_saved = 1
     AND moved_content = 0
@@ -268,9 +272,11 @@ export function getAllUnmovedContentData() {
  * @returns Database Promise that resolves to results of query
  */
 export function getAllUnsavedContent(name) {
-  const nameQuery = name ? `AND username LIKE '${name}'`:`AND username IS NOT NULL`;
+  const nameQuery = name ? `AND 
+    (username LIKE '${name}' OR account_name LIKE '${name}')
+    `:`AND username IS NOT NULL`;
   return db.all(`
-    SELECT content_url, content_name, username
+    SELECT content_url, content_name, username, account_name
     FROM subdata
     WHERE is_content_saved = 0
     AND content_url IS NOT NULL
@@ -282,7 +288,7 @@ export function getAllUnsavedContent(name) {
 
 export function getAllUnsavedThumbnails() {
   return db.all(`
-    SELECT url, content_url, username, thumbnail_url
+    SELECT url, content_url, username, thumbnail_url, account_name
     FROM subdata
     WHERE is_thumbnail_saved = 0
     AND username IS NOT NULL
@@ -301,7 +307,7 @@ export function getAllUnsavedThumbnails() {
 export function needsRepair(username) {
   let usernameQuery = '';
   if (username) {
-    usernameQuery = `AND username = '${username}'`;
+    usernameQuery = `AND (username = '${username}' OR account_name = '${username}')`;
   }
   return db.all(`
   SELECT url
@@ -331,7 +337,7 @@ export function getAllFavUsernames() {
 }
 export function getAllUsernames() {
   return db.all(`
-    SELECT DISTINCT username
+    SELECT DISTINCT username, account_name
     FROM subdata
     WHERE username IS NOT NULL
     ORDER BY username ASC
@@ -378,6 +384,7 @@ export function getAllFavoritesForUser(username) {
       SELECT url
       FROM favorites
       WHERE username = '${username}'
+        OR account_name = '${username}'
     )
   `);
 }
@@ -411,7 +418,7 @@ export function getAllCompleteSubmissionData() {
 
 export function getAllInvalidFiles() {
   return db.all(`
-    SELECT id, content_name, content_url, username
+    SELECT id, content_name, content_url, username, account_name
     FROM subdata
     WHERE content_name LIKE '%.'
     AND is_content_saved = 1

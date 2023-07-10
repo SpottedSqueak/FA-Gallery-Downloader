@@ -3,7 +3,7 @@ import * as db from './js/database-interface.js';
 import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
-import { cleanupFileStructure, deleteInvalidFiles, initDownloads } from './js/download-content.js';
+import { initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
 import { join } from 'node:path';
 import open from 'open';
@@ -48,8 +48,6 @@ async function checkDBRepair() {
   const needsRepair = await db.needsRepair();
   if (needsRepair.length)
     log(`[Data] Database in need of repair:  ${needsRepair.length} submissions have incomplete data.`);
-  await cleanupFileStructure();
-  await deleteInvalidFiles();
 }
 
 async function init() {

@@ -19,7 +19,7 @@ export default {
       </div>
     </div>
   `,
-  props: ['id', 'title', 'username', 'content_name', 'date_uploaded', 'is_content_saved', 'thumbnail_name', 'is_thumbnail_saved', 'rating'],
+  props: ['id', 'title', 'username', 'account_name', 'content_name', 'date_uploaded', 'is_content_saved', 'thumbnail_name', 'is_thumbnail_saved', 'rating'],
   emits: ['loadSubmission', 'searchUser'],
   data() {
     return {
@@ -51,8 +51,8 @@ export default {
     },
     computedImgPath() {
       if (this.thumbnail_name && this.is_thumbnail_saved)
-        return `${this.contentPath}\\${this.username}\\thumbnail\\${this.thumbnail_name}`;
-      return `${this.contentPath}\\${this.username}\\${this.content_name}`;
+        return `${this.contentPath}\\${this.account_name}\\thumbnail\\${this.thumbnail_name}`;
+      return `${this.contentPath}\\${this.account_name}\\${this.content_name}`;
     },
     fileExtension() {
       const fileExtension = this.content_name.split('.').pop().toUpperCase();

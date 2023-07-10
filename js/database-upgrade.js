@@ -1,3 +1,5 @@
+import { cleanupFileStructure, deleteInvalidFiles } from "./download-content.js";
+
 async function fixFavoritesUsernames(db) {
   await db.exec(`
     CREATE TABLE favTemp (
@@ -33,9 +35,8 @@ async function createThumbnailInfo(db) {
  * @returns If an error occurred or not. If yes, we need to exit!
  */
 export async function upgradeDatabase(db) {
-  const { user_version } = await db.get('PRAGMA user_version');
-  let version = user_version;
-  switch(user_version) {
+  let { user_version:version } = await db.get('PRAGMA user_version');
+  switch(version) {
     case 0:
     case 1:
       await db.exec('ALTER TABLE subdata ADD COLUMN username TEXT')
@@ -109,6 +110,11 @@ export async function upgradeDatabase(db) {
         where username IS NOT NULL
       `);
       version = 10;
+    case 10:
+      // Should only need to do these once
+      await cleanupFileStructure();
+      await deleteInvalidFiles();
+      version = 11;
     default:
       await db.exec(`VACUUM`);
       await db.exec(`PRAGMA user_version = ${version}`);

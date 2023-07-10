@@ -127,7 +127,7 @@ export default {
       return /\.$/i.test(this.submission.content_name);
     },
     computedContentPath() {
-      return `${this.contentPath}\\${this.submission.username}\\${this.submission.content_name}`;
+      return `${this.contentPath}\\${this.submission.account_name}\\${this.submission.content_name}`;
     },
     fileExtension() {
       return this.submission.content_name.split('.').pop();

@@ -3,6 +3,7 @@ import { waitFor, log, logProgress, stop, getHTML, urlExists } from './utils.js'
 import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
 import fs from 'fs-extra';
+import { join } from 'node:path';
 import got from 'got';
 import { DOWNLOAD_DIR as downloadDir } from './constants.js';
 
@@ -43,7 +44,7 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
   if (await urlExists(content_url)) {
     return new Promise((resolve, reject) => {
       fs.ensureDirSync(downloadLocation);
-      const fileLocation = `${downloadLocation}/${content_name}`;
+      const fileLocation = join(downloadLocation, content_name);
       const dlStream = got.stream(content_url, faRequestHeaders);
       const fStream = fs.createWriteStream(fileLocation);
       dlStream.on("downloadProgress", ({ transferred, total, percent }) => {
@@ -76,20 +77,29 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
 }
 
 export async function cleanupFileStructure() {
+  // Fix folder names
+  const names = await db.getAllUsernames();
+  names.forEach(({ username, account_name }) => {
+    const oldPath = join(downloadDir, username);
+    const newPath = join(downloadDir, account_name);
+    if (oldPath != newPath && fs.existsSync(oldPath))
+      fs.renameSync(oldPath, newPath);
+  });
+  // Move unmoved content
   const content = await db.getAllUnmovedContentData();
   if (!content.length) return;
   log('[Data] Reorganizing files...');
   function getPromise(index) {
     if (index >= content.length) return;
-    const { username, content_name } = content[index];
-    fs.ensureDirSync(`${downloadDir}/${username}`);
-    return fs.move(`${downloadDir}/${content_name}`, `${downloadDir}/${username}/${content_name}`)
+    const { account_name, content_name } = content[index];
+    fs.ensureDirSync(join(downloadDir, account_name));
+    return fs.move(join(downloadDir, content_name), join(downloadDir, account_name, content_name))
     .then(() => {
       // Set file as moved properly
       return db.setContentMoved(content_name);
     }).catch(() => {
       // Do some fallback to make sure it wasn't already moved?
-      if (fs.existsSync(`${downloadDir}/${username}/${content_name}`))
+      if (fs.existsSync(join(downloadDir, account_name, content_name)))
         return db.setContentMoved(content_name);
       else 
         log(`[Warn] File not moved: ${content_name}`);
@@ -114,8 +124,8 @@ export async function deleteInvalidFiles() {
     log(`[Warn] There are ${brokenFiles.length} invalid files. Deleting...`);
   for (let i = 0; i < brokenFiles.length; i++) {
     const f = brokenFiles[i];
-    const { username, content_name, content_url } = f;
-    const location = `${downloadDir}/${username}/${content_name}`;
+    const { account_name, content_name, content_url } = f;
+    const location =join(downloadDir, account_name, content_name);
     await fs.remove(location);
     await db.setContentNotSaved(content_url);
   }
@@ -125,9 +135,9 @@ export async function deleteInvalidFiles() {
  * Downloads the specified content.
  * @returns 
  */
-export async function downloadSpecificContent({ content_url, content_name, username }) {
+export async function downloadSpecificContent({ content_url, content_name, account_name }) {
   if (stop.now) return;
-  const downloadLocation = `${downloadDir}/${username}`;
+  const downloadLocation = join(downloadDir, account_name);
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setContentSaved(content_url))
     .catch(() => {/** No need to record, just ignore */});
@@ -136,7 +146,7 @@ export async function downloadSpecificContent({ content_url, content_name, usern
  * Downloads the specified thumbnail.
  * @returns 
  */
-export async function downloadThumbnail({ thumbnail_url, url:contentUrl, username }) {
+export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account_name }) {
   if (stop.now) return;
   let content_url = thumbnail_url || '';
   // If blank...
@@ -148,7 +158,7 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, usernam
   }
   if (!content_url) return;
   const content_name = content_url.split('/').pop();
-  const downloadLocation = `${downloadDir}/${username}/thumbnail`;
+  const downloadLocation = join(downloadDir, account_name, 'thumbnail');
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setThumbnailSaved(contentUrl, content_url, content_name))
     .catch(() => db.setThumbnailSaved(contentUrl, '', ''));

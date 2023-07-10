@@ -122,8 +122,8 @@ export default {
       await window.downloadComments(id, url);
       this.loadSubmission(id, true);
     },
-    async downloadContent({ id, content_url, content_name, username }) {
-      await window.downloadContent({ content_url, content_name, username });
+    async downloadContent({ id, content_url, content_name, account_name }) {
+      await window.downloadContent({ content_url, content_name, account_name });
       this.loadSubmission(id, true);
       this.getResults();
     },
