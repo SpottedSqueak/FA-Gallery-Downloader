@@ -106,7 +106,16 @@ export function saveLinks(links, isScraps = false) {
 export function saveComments(comments) {
   let placeholder = [];
   const data = comments.reduce((acc, c) => {
-    let data = [c.id, c.submission_id, c.width, c.username, c.desc, c.subtitle, c.date];
+    let data = [
+      c.id,
+      c.submission_id,
+      c.width,
+      c.username,
+      c.account_name,
+      c.desc,
+      c.subtitle,
+      c.date,
+    ];
     let marks = `(${data.map(()=>'?').join(',')})`;
     acc.push(...data);
     placeholder.push(marks);
@@ -119,6 +128,7 @@ export function saveComments(comments) {
     submission_id,
     width,
     username,
+    account_name,
     desc,
     subtitle,
     date
@@ -376,7 +386,9 @@ export function getAllSubmissionsForUser(username) {
   return db.all(`
     SELECT *
     FROM subdata
-    WHERE username = '${username}'
+    WHERE (
+      username = '${username}' OR account_name = '${username}'
+    )
     AND is_content_saved = 1
     AND id IS NOT NULL
     ORDER BY content_name ASC

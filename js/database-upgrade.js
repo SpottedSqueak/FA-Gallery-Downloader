@@ -91,6 +91,24 @@ export async function upgradeDatabase(db) {
       await db.exec(`ALTER TABLE subdata ADD COLUMN category TEXT`)
       .catch(() => {});
       version = 9;
+    case 9:
+      await db.exec(`ALTER TABLE subdata ADD COLUMN account_name TEXT`)
+      .catch(() => {});
+      await db.exec(`ALTER TABLE commentdata ADD COLUMN account_name TEXT`)
+      .catch(() => {});
+      await db.exec(`
+        UPDATE subdata
+        SET 
+          account_name = REPLACE(username, '_', '')
+        where username IS NOT NULL
+      `);
+      await db.exec(`
+        UPDATE commentdata
+        SET 
+          account_name = REPLACE(username, '_', '')
+        where username IS NOT NULL
+      `);
+      version = 10;
     default:
       await db.exec(`VACUUM`);
       await db.exec(`PRAGMA user_version = ${version}`);

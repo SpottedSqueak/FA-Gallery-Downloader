@@ -66,11 +66,13 @@ export async function scrapeComments($, submission_id, url) {
         date = $div.find('comment-date > span').attr('title').trim();
         if (/ago/i.test(date)) date = $div.find('comment-date > span').text().trim();
       }
+      const username = isDeleted ? '' : $div.find('comment-username').text().trim();
       return {
         id: $div.find('.comment_anchor').attr('id'),
         submission_id,
         width: $div.attr('style'),
-        username: isDeleted ? '' : $div.find('comment-username').text().trim(),
+        username,
+        account_name: username.replace(/_/gi, ''),
         desc: isDeleted ? '' : $div.find('comment-user-text .user-submitted-links').html().trim(),
         subtitle: isDeleted ? '' : $div.find('comment-title').text().trim(),
         date,
@@ -107,10 +109,12 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
     // Get data if it does
     let date = $('.submission-id-sub-container .popup_date').attr('title').trim();
     if (/ago$/i.test(date)) date = $('.submission-id-sub-container .popup_date').text().trim();
+    const username = $('.submission-title + a').text().trim().toLowerCase();
     const data = {
       id: links[index].url.split('view/')[1].split('/')[0],
       title: $('.submission-title').text().trim(),
-      username: $('.submission-title + a').text().trim().toLowerCase(),
+      username,
+      account_name: username.replace(/_/gi, ''),
       desc: $('.submission-description').html().trim(),
       tags: $('.tags-row').text().match(/([A-Z])\w+/gmi)?.join(','),
       content_name: $('.download > a').attr('href').split('/').pop(),

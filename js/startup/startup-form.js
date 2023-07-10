@@ -5,7 +5,7 @@ export default {
     <form class="user-input" @submit.prevent="sendData">
       <p class="user-input__gallery-options">
         <label for="username">Gallery to download:</label>
-        <input type="text" id="username" v-model="username" placeholder="Enter a username:" />
+        <input type="text" id="username" v-model.trim="username" placeholder="Enter a username:" />
         <button id="start-download">{{downloadText}}</button>
       </p>
       <div class="user-input__scrape-options">
@@ -57,7 +57,7 @@ export default {
   },
   computed: {
     name() {
-      return this.username.toLowerCase().trim();
+      return this.username.toLowerCase().trim().replace(/_/gi, '');
     },
     loginBtnText() {
       return this.isLoggedIn ? 'Switch Accounts': 'Login';
