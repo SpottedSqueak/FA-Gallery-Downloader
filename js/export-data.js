@@ -49,7 +49,7 @@ async function exportData(name) {
       folderIndex++;
       await fs.ensureDir(join(dirPath, `${folderIndex}`, 'scraps'), dlOptions);
       await fs.ensureDir(join(dirPath, `${folderIndex}`, 'gallery'), dlOptions);
-      await fs.ensureFile(join(dirPath, `${folderIndex}`, `archive.chunk`), dlOptions);
+      await fs.ensureFile(join(dirPath, `${folderIndex}`, `archive.chunk`));
     }
     data = allUserData[i];
     archiveFileName = `${data.id}f.${data.content_name.split('.').pop()}`;
