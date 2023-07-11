@@ -8,6 +8,9 @@ import got from 'got';
 import { DOWNLOAD_DIR as downloadDir } from './constants.js';
 
 const progressID = 'file';
+const dlOptions = {
+  mode: fs.constants.S_IROTH | fs.constants.S_IWOTH,
+};
 let thumbnailsRunning = false;
 let totalThumbnails = 0;
 let totalFiles = 0;
@@ -43,10 +46,10 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
   // Check to see if this file even exists by checking the header response
   if (await urlExists(content_url)) {
     return new Promise((resolve, reject) => {
-      fs.ensureDirSync(downloadLocation);
+      fs.ensureDirSync(downloadLocation, dlOptions);
       const fileLocation = join(downloadLocation, content_name);
       const dlStream = got.stream(content_url, faRequestHeaders);
-      const fStream = fs.createWriteStream(fileLocation);
+      const fStream = fs.createWriteStream(fileLocation, { flags: 'w+' });
       dlStream.on("downloadProgress", ({ transferred, total, percent }) => {
         const percentage = Math.round(percent * 100);
         logProgress({ transferred, total, percentage, filename: getTotals() }, progressID);
@@ -92,7 +95,7 @@ export async function cleanupFileStructure() {
   function getPromise(index) {
     if (index >= content.length) return;
     const { account_name, content_name } = content[index];
-    fs.ensureDirSync(join(downloadDir, account_name));
+    fs.ensureDirSync(join(downloadDir, account_name), dlOptions);
     return fs.move(join(downloadDir, content_name), join(downloadDir, account_name, content_name))
     .then(() => {
       // Set file as moved properly
@@ -108,12 +111,7 @@ export async function cleanupFileStructure() {
   let i = 0;
   while (i < content.length) {
     if (stop.now) return;
-    // Move 3 files at a time
-    await Promise.all([
-      getPromise(i++),
-      getPromise(i++),
-      getPromise(i++)
-    ]);
+    await getPromise(i++);
   }
   log(`[Data] Files reorganized by user!`);
 }
@@ -233,7 +231,7 @@ async function startAllDownloads(name) {
  */
 export async function initDownloads(name) {
   resetTotals();
-  fs.ensureDirSync(downloadDir);
+  await fs.ensureDir(downloadDir, dlOptions);
   await waitFor(5000);
   if (stop.now) return;
   log('[File] Starting downloads...', progressID);

@@ -6,6 +6,10 @@ import { DOWNLOAD_DIR, EXPORT_DIR } from './constants.js';
 import { log, stop } from './utils.js';
 import * as db from './database-interface.js'
 
+const dlOptions = {
+  mode: fs.constants.S_IROTH | fs.constants.S_IWOTH
+};
+
 function constructJSON(d) {
   return JSON.stringify({
     type: (/(png|jpg|gif|webp|jpeg)$/i.test(d.content_name)) ? 'image':'other',
@@ -43,9 +47,9 @@ async function exportData(name) {
     // Loop through 50 submissions...
     if (i%50 === 0) {
       folderIndex++;
-      await fs.ensureDir(join(dirPath, `${folderIndex}`, 'scraps'));
-      await fs.ensureDir(join(dirPath, `${folderIndex}`, 'gallery'));
-      await fs.ensureFile(join(dirPath, `${folderIndex}`, `archive.chunk`));
+      await fs.ensureDir(join(dirPath, `${folderIndex}`, 'scraps'), dlOptions);
+      await fs.ensureDir(join(dirPath, `${folderIndex}`, 'gallery'), dlOptions);
+      await fs.ensureFile(join(dirPath, `${folderIndex}`, `archive.chunk`), dlOptions);
     }
     data = allUserData[i];
     archiveFileName = `${data.id}f.${data.content_name.split('.').pop()}`;

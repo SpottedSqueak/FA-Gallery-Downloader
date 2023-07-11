@@ -138,7 +138,7 @@ export async function log(text, id, noConsole) {
  */
 export function getHTML(url, sendHeaders = true) {
   const headers = sendHeaders ? faRequestHeaders : {};
-  headers.timeout = { response: 1000 };
+  headers.timeout = { response: 2000 };
   return got(url, headers).text()
   .then((result) => {
     console.log(`Loaded: ${url}`);
@@ -163,7 +163,7 @@ export async function releaseCheck() {
 }
 export async function urlExists(url, sendHeaders = true) {
   let headers = sendHeaders ? faRequestHeaders : {};
-  headers = {...headers, method: 'HEAD', timeout: { response: 1000 }};
+  headers = {...headers, method: 'HEAD', timeout: { response: 2000 }};
   return got(url, headers).then(() => true).catch(() => false);
 }
 export async function sendStartupInfo(data = {}) {
