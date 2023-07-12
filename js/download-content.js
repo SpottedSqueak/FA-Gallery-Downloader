@@ -9,7 +9,7 @@ import { DOWNLOAD_DIR as downloadDir } from './constants.js';
 
 const progressID = 'file';
 const dlOptions = {
-  mode: fs.constants.S_IROTH | fs.constants.S_IWOTH,
+  mode: fs.constants.S_IRWXO,
 };
 let thumbnailsRunning = false;
 let totalThumbnails = 0;
@@ -49,7 +49,7 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
       fs.ensureDirSync(downloadLocation, dlOptions);
       const fileLocation = join(downloadLocation, content_name);
       const dlStream = got.stream(content_url, faRequestHeaders);
-      const fStream = fs.createWriteStream(fileLocation, { flags: 'w+' });
+      const fStream = fs.createWriteStream(fileLocation, { flags: 'w+', mode: fs.constants.S_IRWXO });
       dlStream.on("downloadProgress", ({ transferred, total, percent }) => {
         const percentage = Math.round(percent * 100);
         logProgress({ transferred, total, percentage, filename: getTotals() }, progressID);

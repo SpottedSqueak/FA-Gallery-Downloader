@@ -7,7 +7,7 @@ import { log, stop } from './utils.js';
 import * as db from './database-interface.js'
 
 const dlOptions = {
-  mode: fs.constants.S_IROTH | fs.constants.S_IWOTH
+  mode: fs.constants.S_IRWXO
 };
 
 function constructJSON(d) {
