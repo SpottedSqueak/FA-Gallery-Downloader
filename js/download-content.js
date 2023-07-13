@@ -45,37 +45,43 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
   }
   // Check to see if this file even exists by checking the header response
   if (await urlExists(content_url)) {
+    console.log(`Downloading: ${content_name}`);
+    const fileLocation = join(downloadLocation, content_name);
+    await fs.ensureDir(downloadLocation, dlOptions);
     return new Promise((resolve, reject) => {
-      fs.ensureDirSync(downloadLocation, dlOptions);
-      const fileLocation = join(downloadLocation, content_name);
       const dlStream = got.stream(content_url, faRequestHeaders);
       const fStream = fs.createWriteStream(fileLocation, { flags: 'w+', mode: fs.constants.S_IRWXO });
-      dlStream.on("downloadProgress", ({ transferred, total, percent }) => {
+      dlStream.on('downloadProgress', ({ transferred, total, percent }) => {
         const percentage = Math.round(percent * 100);
         logProgress({ transferred, total, percentage, filename: getTotals() }, progressID);
       })
-      .on("error", (error) => {
+      .on('error', (error) => {
         logProgress.reset(progressID);
         console.error(`Download failed: ${error.message} for ${content_name}`);
-        fs.removeSync(fileLocation);
+        if (!fStream.closed) fStream.end();
         reject();
       });
 
-      fStream.on("error", (error) => {
+      fStream.on('error', (error) => {
           logProgress.reset(progressID);
           console.error(`Could not write file '${content_name}' to system: ${error.message}`);
-          fs.removeSync(fileLocation);
           reject();
         })
-        .on("finish", () => {
-          // log(`[File] Downloaded: "${content_name}"`, progressID);
+        .on('finish', () => {
+          // log(`[File] Downloaded: '${content_name}'`, progressID);
           resolve();
         });
       dlStream.pipe(fStream);
+    }).catch(() => {
+      try {
+        fs.removeSync(fileLocation);
+      } catch (e) {
+        console.error(e);
+      }
     });
   } else {
-    console.warn(`File '${content_name} does not exist!`);
-    return Promise.reject();
+    console.warn(`File not found: '${content_name}`);
+    return Promise.reject('Not found');
   }
 }
 
@@ -159,7 +165,10 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account
   const downloadLocation = join(downloadDir, account_name, 'thumbnail');
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setThumbnailSaved(contentUrl, content_url, content_name))
-    .catch(() => db.setThumbnailSaved(contentUrl, '', ''));
+    .catch((e) => {
+      if (e.message === 'Not found') return;
+      db.setThumbnailSaved(contentUrl, '', '');
+    });      
 }
 /**
  * Gets all download urls and records when they're done.
