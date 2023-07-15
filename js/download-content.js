@@ -1,5 +1,5 @@
 import random from 'random';
-import { waitFor, log, logProgress, stop, getHTML, urlExists } from './utils.js';
+import { waitFor, log, logProgress, stop, getHTML, urlExists, isSiteActive } from './utils.js';
 import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
 import fs from 'fs-extra';
@@ -80,8 +80,10 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
       }
     });
   } else {
-    console.warn(`File not found: '${content_name}`);
-    return Promise.reject('Not found');
+    console.warn(`File not found: '${content_name}'`);
+    if (!await isSiteActive()) 
+      return Promise.reject(new Error('Site down'));
+    else return Promise.reject(new Error('Not found'));
   }
 }
 
@@ -144,7 +146,15 @@ export async function downloadSpecificContent({ content_url, content_name, accou
   const downloadLocation = join(downloadDir, account_name);
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setContentSaved(content_url))
-    .catch(() => {/** No need to record, just ignore */});
+    .catch((e) => {
+      if (!e) return; // Skip if no real error
+      if (/site.down/gi.test(e.message)) {
+        stop.now = true;
+        return log(`[Data] FA appears to be down, stopping all downloads`);
+      } else if(/not.found/gi.test(e.message)) {
+        db.setContentMissing(content_name);
+      }
+    });
 }
 /**
  * Downloads the specified thumbnail.
@@ -166,18 +176,22 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setThumbnailSaved(contentUrl, content_url, content_name))
     .catch((e) => {
-      if (e.message === 'Not found') return;
-      db.setThumbnailSaved(contentUrl, '', '');
+      if (!e) return; // Skip if no real error
+      if (/site.down/gi.test(e.message)) {
+        stop.now = true;
+        return log(`[Data] FA appears to be down, stopping all downloads`);
+      } else if(/not.found/gi.test(e.message)) {
+        db.setThumbnailMissing(content_name);
+      }
     });      
 }
 /**
  * Gets all download urls and records when they're done.
  * @returns 
  */
-async function startContentDownloads(name) {
+async function startContentDownloads() {
   if (stop.now) return;
-  let data = await db.getAllUnsavedContent(name);
-  if (!data.length) data = await db.getAllUnsavedContent();
+  let data = await db.getAllUnsavedContent();
   if (!data.length) return;
   totalFiles = data.length;
   currFile = 1;
@@ -191,7 +205,7 @@ async function startContentDownloads(name) {
     currFile = i + 1;
   }
   await waitFor(random.int(2000, 4000));
-  return startContentDownloads(name);
+  return startContentDownloads();
 }
 export async function startUserContentDownloads(data) {
   totalFiles = data.length;

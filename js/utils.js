@@ -7,7 +7,7 @@ import fs from 'fs-extra';
 import * as db from './database-interface.js';
 import util from 'util';
 import { exitCode, default as process, platform } from 'node:process';
-import { RELEASE_CHECK, LOG_DIR as logDir } from './constants.js';
+import { FA_URL_BASE, RELEASE_CHECK, LOG_DIR as logDir } from './constants.js';
 
 export const isWindows = platform === 'win32';
 export const isMac = platform === 'darwin';
@@ -166,10 +166,16 @@ export async function urlExists(url, sendHeaders = true) {
   headers = {...headers, method: 'HEAD', timeout: { response: 3000 }};
   return got(url, headers).then(() => true).catch(() => false);
 }
+export async function isSiteActive() {
+  return urlExists(FA_URL_BASE);
+}
 export async function sendStartupInfo(data = {}) {
   if (!data.username) data.username = username;
   if (!data.accounts) data.accounts = await db.getOwnedAccounts();
   return page.evaluate(`window.setPageInfo?.(${JSON.stringify(data)})`);
+}
+export async function setActive(val = true) {
+  return page.evaluate(`window.setActive?.(${val})`);
 }
 /**
  * Binds the given Page object for future log messages.

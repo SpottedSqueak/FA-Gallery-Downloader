@@ -1,4 +1,4 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, hideConsole, urlExists, releaseCheck } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, hideConsole, releaseCheck, isSiteActive, setActive } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
@@ -41,7 +41,10 @@ async function downloadPath(name = username, scrapeGallery = true, scrapeComment
     initDownloads(name),
   ]).then(() => {
     if(!stop.now) log('Requested downloads complete! ♥');
-  }).finally(() => inProgress = false);
+  }).finally(() => {
+    inProgress = false;
+    setActive(false);
+  });
 }
 
 async function checkDBRepair() {
@@ -82,22 +85,29 @@ async function init() {
     } else if (choice === 'open') {
       if (data.url) open(data.url);
     } else if (choice === 'repair') {
-      log('[Data] Checking database...');
       if (inProgress)
         return log(`[Data] Please stop data scraping before restarting!`);
+      log('[Data] Checking database...');
       inProgress = true;
+      setActive(true);
       const inNeedOfRepair = await db.needsRepair();
       if (inNeedOfRepair.length) {
         logLast('Database incomplete! Working on that now...');
         await scrapeSubmissionInfo({ data: inNeedOfRepair, downloadComments: true })
-          .finally(() => inProgress = false);
+          .finally(() => {
+            inProgress = false;
+            setActive(false);
+          });
         if (!stop.now) logLast(`Database repaired!`);
       } else {
         inProgress = false;
+        setActive(false);
         logLast(`Database OK!`);
       }
     } else if (choice === 'export-data') {
-      exportData(data.name);
+      setActive(true);
+      await exportData(data.name);
+      setActive(false);
     } else if (choice === 'release-check') {
       sendStartupInfo(await releaseCheck());
     }
@@ -106,7 +116,7 @@ async function init() {
     await sendStartupInfo(await releaseCheck());
   });
   await page.goto(startupLink);
-  const isFAUp = await urlExists(FA_URL_BASE);
+  const isFAUp = await isSiteActive();
   if (isFAUp && await checkIfLoggedIn(browser)) await sendStartupInfo();
   if (!isFAUp) log(`[Warn] FA appears to be down, try again later`);
   // Repair DB if needed

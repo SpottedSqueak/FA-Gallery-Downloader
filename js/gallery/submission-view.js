@@ -9,15 +9,24 @@ export default {
           <div v-if="error" class="download-link" @click="downloadContent">File possibly corrupted!<br>Redownload?</div>
           <img v-else-if="isImg" :src="computedContentPath" @click.self="openInNewWindow" :alt="altText" :title="altText" @error="error = true" />
           <object v-else-if="isPDF" class="pdf-embed" :data="computedContentPath" type="application/pdf" @error="error = true"></object>
+          <object v-else-if="isSWF" class="swf-embed" type="application/x-shockwave-flash" :data="computedContentPath" id="applicationID">
+            <param name="movie" :value="computedContentPath" />
+            <param name="wmode" value="transparent" />
+            <param name="FlashVars" value="" />
+            <param name="quality" value="high" />
+            <param name="menu" value="false" />
+          </object>
           <object v-else-if="isTxt" class="pdf-embed txt" :data="computedContentPath" type="text/plain" @error="error = true"></object>
           <audio v-else-if="isMusic" class="music-embed" controls :src="computedContentPath" @error="error = true"></audio>
           <div v-else-if="isDoc" class="download-link" @click="openInNewWindow">Content not embedded. Download to view!</div>
           <div v-else-if="isUnknown" class="music-embed">Invalid/Blank filetype: "{{submission.content_name}}"<br>This file cannot be displayed or downloaded, due to it's missing filetype</div>
+          <div v-else-if="isMissing" class="music-embed">Content missing: "{{submission.content_name}}"<br>This file cannot be downloaded, as it is missing on FA</div>
+          <div v-else-if="isDownloadable" class="music-embed">Content: "{{submission.content_name}}" not displayable</div>
           <div v-else class="download-link" @click="downloadContent">Content not downloaded!<br>Download now?</div>
         </div>
         <div class="submission-metadata">
           <button class="close-btn" @click="close">✖ Close</button>
-          <button class="full-size-btn" :disabled="!submission.is_content_saved" @click.self="openInNewWindow">View Full Size</button>
+          <button class="full-size-btn" :disabled="!isDownloadable" @click.self="openInNewWindow">View Full Size</button>
           <div class="submission-metadata__info">
             <h3>Rating</h3>
             <div :class="[cleanRating]">{{submission.rating || '[Missing]'}}</div>
@@ -123,8 +132,22 @@ export default {
         && /(mp3|wav|ogg)$/i.test(this.submission.content_name)
       );
     },
+    isSWF() {
+      return (
+        this.contentPath
+        && this.submission.is_content_saved
+        && /(swf)$/i.test(this.submission.content_name)
+      );
+    },
     isUnknown() {
       return /\.$/i.test(this.submission.content_name);
+    },
+    isMissing() {
+      return !!this.submission.content_missing;
+    },
+    isDownloadable() {
+      return this.submission.is_content_saved &&
+        !(this.isUnknown && this.isMissing);
     },
     computedContentPath() {
       return `${this.contentPath}\\${this.submission.account_name}\\${this.submission.content_name}`;

@@ -266,6 +266,10 @@ div.gallery-tile__info {
 .pdf-embed.txt {
   padding: 10px 0 10px 10px;
 }
+.swf-embed {
+  width: 100%;
+  height: auto;
+}
 .music-embed {
   align-self: center;
 }

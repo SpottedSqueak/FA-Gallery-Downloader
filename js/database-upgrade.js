@@ -115,6 +115,10 @@ export async function upgradeDatabase(db) {
       await cleanupFileStructure();
       await deleteInvalidFiles();
       version = 11;
+    case 11:
+      await db.exec(`ALTER TABLE subdata ADD COLUMN content_missing INTEGER default 0`).catch(() => {});
+      await db.exec(`ALTER TABLE subdata ADD COLUMN thumbnail_missing INTEGER default 0`).catch(() => {});
+      version = 12;
     default:
       await db.exec(`VACUUM`);
       await db.exec(`PRAGMA user_version = ${version}`);

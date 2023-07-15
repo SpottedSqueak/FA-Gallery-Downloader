@@ -50,17 +50,19 @@ export default {
   beforeCreate() {
     window.logMsg = ({ text, id, replaceLast }) => {
       this.msg = { text, id, replaceLast };
-    }
+    };
     window.logProgress = ({ bar, value, max, reset, filename }) => {
-      if (!reset) this.isActive = !!value;
       this.logProgress = { bar, value, max, reset, filename };
-    }
+    };
     window.setPageInfo = (data) => {
       if (data.queryName) this.queryName = data.queryName;
       if (data.username) this.username = data.username;
       if (data.accounts) this.accounts = data.accounts;
       if (data.current) this.version = data.current;
       if (data.latest) this.newVersion = data.latest;
+    };
+    window.setActive = (val = true) => {
+      this.isActive = val;
     }
   },
   mounted() {

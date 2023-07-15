@@ -56,6 +56,22 @@ export function setContentMoved(content_name) {
   WHERE content_name = '${content_name}'
   `);
 }
+export function setContentMissing(content_name) {
+  return db.run(`
+  UPDATE subdata
+  SET
+    content_missing = 1
+  WHERE content_name = '${content_name}'
+  `);
+}
+export function setThumbnailMissing(thumbnail_name) {
+  return db.run(`
+  UPDATE subdata
+  SET
+    thumbnail_missing = 1
+  WHERE thumbnail_name = '${thumbnail_name}'
+  `);
+}
 export function setThumbnailSaved(url, thumbnail_url, thumbnail_name) {
   return db.run(`
     UPDATE subdata
@@ -279,6 +295,7 @@ export function getAllUnsavedContent(name) {
     SELECT content_url, content_name, username, account_name
     FROM subdata
     WHERE is_content_saved = 0
+    AND content_missing = 0
     AND content_url IS NOT NULL
     AND content_name NOT LIKE '%.'
     ${nameQuery}
@@ -292,6 +309,7 @@ export function getAllUnsavedThumbnails() {
     FROM subdata
     WHERE is_thumbnail_saved = 0
     AND username IS NOT NULL
+    AND thumbnail_missing = 0
     AND (
       content_url LIKE '%/stories/%'
       OR content_url LIKE '%/music/%'
