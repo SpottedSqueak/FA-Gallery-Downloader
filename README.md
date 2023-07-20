@@ -57,6 +57,9 @@ I hope it helps, it's always a good idea to not put all your eggs in one basket.
 
 - [ ] Fix comic navigation so you can move between them inside of the gallery viewer
 
+## Known Issues
+
+- Sometimes, after an update, the program might crash and be unable to start. Try deleting the entire Caxa folder in your OS temp folder (`%TEMP%` on Windows, `/tmp` on Ubuntu) and running it again to reinstall.
 
 Check out my stuff on FA if you'd like!
 
