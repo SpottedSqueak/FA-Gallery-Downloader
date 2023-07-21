@@ -15,7 +15,8 @@ function setRequestHeaders(faCookies) {
   };
 }
 export async function checkForOldTheme(page) {
-  const $ = await getHTML(FA_URL_BASE);
+  const $ = await getHTML(FA_URL_BASE).catch(() => false);
+  if (!$) return log(`[Warn] FA might be down, please try again later`);
   if (/classic/i.test($('body').data('static-path'))) {
     log(`[Warn] Using incompatible old FA theme, prompting user to update settings`);
     page = await browser.newPage();
@@ -53,7 +54,8 @@ function setUsername($) {
 }
 async function checkIfCookiesExpired() {
   // Do a final check just to be sure cookies didn't expire
-  const $ = await getHTML(FA_URL_BASE);
+  const $ = await getHTML(FA_URL_BASE).catch(() => false);
+  if (!$) return false;
   const notLoggedIn = !setUsername($);
   if (!notLoggedIn) await setOwnedAccount(username);
   return notLoggedIn;

@@ -21,7 +21,12 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
   log(`[Data] Searching user ${dirName} for submission links...`, divID);
   logProgress.busy(progressID);
   while(!stopLoop && !stop.now) {
-    let $ =  await getHTML((!nextPage) ? url + currPageCount : nextPage);
+    const pageUrl = (!nextPage) ? url + currPageCount : nextPage;
+    let $ =  await getHTML(pageUrl).catch(() => false);
+    if (!$) {
+      stop.now = true;
+      return log(`[Warn] FA might be down, please try again later`);
+    }
     // Check for content
     let newLinks = Array.from($('figcaption a[href^="/view"]'))
       .map((div) => FA_URL_BASE + div.attribs.href);
@@ -56,7 +61,8 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
  */
 export async function scrapeComments($, submission_id, url) {
   if (stop.now) return logProgress.reset(progressID);
-  $ = $ || await getHTML(url);
+  $ = $ || await getHTML(url).catch(() => false);
+  if (!$) return log(`[Data] Comment page not found: ${url}`);
   const comments = Array.from($('#comments-submission .comment_container'))
     .map((val) => {
       const $div = $(val);
@@ -93,16 +99,29 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
   let index = 0;
   while (index < links.length && !stop.now) {
     logProgress({transferred: index+1, total: links.length}, progressID);
-    let $ = await getHTML(links[index].url);
-    // Check if submission still exists
-    if (!$ || !$('.submission-title').length) {
-      if($ && $('.section-body').text().includes('The submission you are trying to find is not in our database.')) {
-        log(`[Error] Confirmed deleted, removing: ${links[index].url}`);
-        await db.deleteSubmission(links[index].url);
-        index++;
+    let $ = await getHTML(links[index].url)
+    .then(_$ => {
+      if (!_$ || !_$('.submission-title').length) {
+        if(_$('.section-body').text().includes('The submission you are trying to find is not in our database.')) {
+          log(`[Error] Confirmed deleted, removing: ${links[index].url}`);
+          db.deleteSubmission(links[index].url);
+        } else {
+          log(`[Error] Not found/deleted: ${links[index].url}`);
+        }
+        return false;
       } else {
-        log(`[Error] Not found/deleted: ${links[index].url}`);
+        return _$;
       }
+    })
+    .catch(e => {
+      if (e.code === 'ERR_NON_2XX_3XX_RESPONSE') {
+        // Gonna assume deleted
+        db.deleteSubmission(links[index].url);
+      }
+      return false;
+    });
+    if (!$) {
+      index++;
       await waitFor(random.int(2000, 3500));
       continue;
     }

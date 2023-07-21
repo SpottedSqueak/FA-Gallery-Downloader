@@ -166,7 +166,8 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account
   // If blank...
   if (!content_url) {
     // Query the page to get it
-    const $ = await getHTML(contentUrl);
+    const $ = await getHTML(contentUrl).catch(() => false);
+    if (!$) return;
     content_url = $('.page-content-type-text, .page-content-type-music').find('#submissionImg').attr('src') || '';
     if (content_url) content_url = 'https:' + content_url;
   }

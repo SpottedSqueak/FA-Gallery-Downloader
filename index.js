@@ -22,8 +22,8 @@ async function downloadPath(name = username, scrapeGallery = true, scrapeComment
     const FA_FAVORITES_URL = `${FA_URL_BASE}/favorites/${name}/`;
 
     // Check if valid username
-    const $ = await getHTML(FA_USER_BASE + name);
-    if (/system.error/i.test($('title').text())) {
+    const $ = await getHTML(FA_USER_BASE + name).catch(() => false);
+    if (!$ || /system.error/i.test($('title').text())) {
       return log(`[Warn] Invalid username: ${name}`);
     }
     // Scrape data from gallery pages

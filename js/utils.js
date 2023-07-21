@@ -145,7 +145,7 @@ export function getHTML(url, sendHeaders = true) {
     return cheerio.load(result);
   }).catch((e) => {
     console.error(e);
-    return false;
+    return Promise.reject(e);
   });
 }
 /**
@@ -154,7 +154,7 @@ export function getHTML(url, sendHeaders = true) {
  */
 export async function releaseCheck() {
   const data = { current: getVersion() };
-  let $ = await getHTML(RELEASE_CHECK, false);
+  let $ = await getHTML(RELEASE_CHECK, false).catch(() => false);
   if ($) {
     const latest = $('a.Link--primary').first().text().replace('v', '');
     data.latest = latest;
