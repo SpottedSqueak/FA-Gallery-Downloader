@@ -110,6 +110,9 @@ async function init() {
       setActive(false);
     } else if (choice === 'release-check') {
       sendStartupInfo(await releaseCheck());
+    } else if (choice === 'delete-account') {
+      await db.deleteOwnedAccount(data.name);
+      sendStartupInfo();
     }
   });
   page.on('domcontentloaded', async () => {

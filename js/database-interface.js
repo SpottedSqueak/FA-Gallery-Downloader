@@ -193,6 +193,12 @@ export function setOwnedAccount(username) {
   if (!username) return;
   return genericInsert('ownedaccounts', 'username', ['(?)'], [username]);
 }
+export function deleteOwnedAccount(username) {
+  return db.exec(`
+    DELETE FROM ownedaccounts
+    WHERE username = '${username}'
+  `);
+}
 
 // SELECT/GET functions
 export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='DESC') {

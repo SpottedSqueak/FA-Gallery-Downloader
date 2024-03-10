@@ -46,7 +46,7 @@ export async function checkForOldTheme(page) {
 }
 function setUsername($) {
   // Need to get username for loggedin user
-  let href = $('a[href^="/user"]').first().attr('href');
+  let href = $('#ddmenu a[href^="/user"]').first().attr('href');
   href.replace('#', '');
   if (!href) return false;
   username = href.split('user/')[1].split('/')[0];

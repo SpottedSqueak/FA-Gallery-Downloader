@@ -29,7 +29,7 @@ export default {
       <p>Login to an account to see it listed here!</p>
       <ul>
         <template v-for="name in accounts">
-          <li><span>{{name}}</span> <button @click.prevent="exportData(name)">Export: Postybirb</button></li>
+          <li><span>{{name}}</span> <button @click.prevent="exportData(name)" alt="Export to Postybirb" title="Export to Postybirb">Export: Postybirb</button><button @click.prevent="deleteAccount(name)" alt="Delete account name" title="Delete account name">❌</button></li>
         </template>
       </ul>
     </div>
@@ -87,6 +87,11 @@ export default {
     },
     exportData(name) {
       this.$emit('sendEvent', { choice: 'export-data', name });
+    },
+    deleteAccount(name) {
+      if (window.confirm(`Remove account: [${name}]? \nNOTE: You'll need to login again to access it.`)) {
+        this.$emit('sendEvent', { choice: 'delete-account', name });
+      }
     }
   }
 }

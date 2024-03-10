@@ -186,6 +186,7 @@ export default {
         .replace(/img src/gi, `img onerror='this.src="../html/resources/_default.gif"' src`);
     },
     getCommentDate(date) {
+      if (!date) return '';
       return getRelativeTime(+new Date(date));
     },
     async getContentPath() {
