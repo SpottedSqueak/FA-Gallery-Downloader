@@ -18,7 +18,7 @@
     "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader.sh\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
   },
   "dependencies": {
-    "@puppeteer/browsers": "^1.4.1",
+    "@puppeteer/browsers": "^2.2.3",
     "browser-paths": "^1.1.1",
     "cheerio": "^1.0.0-rc.12",
     "cli-progress": "^3.12.0",
@@ -30,8 +30,8 @@
     "puppeteer-extra-plugin-adblocker": "^2.13.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "random": "^4.1.0",
-    "sqlite": "^4.2.1",
-    "sqlite3": "^5.1.6"
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "caxa": "^3.0.1",

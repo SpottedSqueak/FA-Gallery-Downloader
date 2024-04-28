@@ -1,4 +1,4 @@
-import { getPromise } from './utils.js';
+import { getPromise, stop } from './utils.js';
 import * as db from './database-interface.js';
 import { DEFAULT_BROWSER_PARAMS, BROWSER_DIR, IGNORE_DEFAULT_PARAMS, DOWNLOADED_BROWSER_DIR } from './constants.js';
 import { getChromePath, getChromiumPath } from 'browser-paths';
@@ -82,8 +82,12 @@ export async function setupBrowser() {
   page.setDefaultNavigationTimeout(0);
   // Close program when main page is closed
   page.on('close', async () => {
-    await db.close();
-    process.exit(1);
+    stop.now = true;
+    setTimeout(() => {
+      db.close().finally(() => {
+        setTimeout(() => { process.exit(1) }, 1000);
+      });
+    }, 1000);
   });
   // Display startup page
   return { browser, page };

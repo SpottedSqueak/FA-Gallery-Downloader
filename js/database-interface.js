@@ -1,10 +1,13 @@
 import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
+import * as sqlite from 'sqlite';
 import fs from 'fs-extra';
 import process from 'node:process';
 import { DB_LOCATION as dbLocation } from './constants.js';
 import { upgradeDatabase } from './database-upgrade.js';
 
+const { open } = sqlite;
+
+/**@type sqlite.Database */
 let db = null;
 
 // INSERT/UPDATE functions
@@ -455,7 +458,7 @@ export async function getUserSettings() {
 }
 
 export async function close() {
-  return db.close();
+  return db.close().catch(() => console.log('Database already closed!'));
 }
 
 /**

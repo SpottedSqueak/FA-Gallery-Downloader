@@ -175,6 +175,7 @@ export async function sendStartupInfo(data = {}) {
   return page.evaluate(`window.setPageInfo?.(${JSON.stringify(data)})`);
 }
 export async function setActive(val = true) {
+  if(stop.now) return;
   return page.evaluate(`window.setActive?.(${val})`);
 }
 /**
