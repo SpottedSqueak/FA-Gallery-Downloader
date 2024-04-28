@@ -5,7 +5,7 @@
 ### [> Download Latest Release <](https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases)
 ---
 ## Dev Info
-Built using `node v16.20.0` and `npm v8.19.4`
+Built using `node v22.0.0` and `npm v10.5.1`
 
 Install: `npm i`
 
