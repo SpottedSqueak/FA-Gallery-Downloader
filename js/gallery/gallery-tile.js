@@ -37,6 +37,9 @@ export default {
    this.error = false;
   },
   computed: {
+    cleanAccountName() {
+      return this.account_name.replace(/\.$/, '._');
+    },
     isImg() {
       return (
         this.contentPath
@@ -51,8 +54,8 @@ export default {
     },
     computedImgPath() {
       if (this.thumbnail_name && this.is_thumbnail_saved)
-        return `${this.contentPath}\\${this.account_name}\\thumbnail\\${this.thumbnail_name}`;
-      return `${this.contentPath}\\${this.account_name}\\${this.content_name}`;
+        return `${this.contentPath}\\${this.cleanAccountName}\\thumbnail\\${this.thumbnail_name}`;
+      return `${this.contentPath}\\${this.cleanAccountName}\\${this.content_name}`;
     },
     fileExtension() {
       const fileExtension = this.content_name.split('.').pop().toUpperCase();

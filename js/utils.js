@@ -126,7 +126,7 @@ export async function logLast(text, id) {
  * @param {String} text 
  */
 export async function log(text, id, noConsole) {
-  if (!page?.isClosed()) {
+  if (!page?.isClosed() && page) {
     page.evaluate(`window.logMsg?.(${JSON.stringify({ text, id })})`);
   }
   if (!noConsole) console.log(text);

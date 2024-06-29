@@ -124,6 +124,24 @@ export async function cleanupFileStructure() {
   log(`[Data] Files reorganized by user!`);
 }
 
+export async function fixInvalidUsernames() {
+  const names = await db.getAllUsernames();
+  log('[Data] Renaming invalid files');
+  // Rename folders with wrong names
+  names.forEach(({ account_name }) => {
+    // If ends with a period...
+    if (/\.$/i.test(account_name)) {
+      // Rename associated folder
+      const newName = account_name.replace(/\.$/, '._');
+      const oldPath = join(downloadDir, account_name);
+      const newPath = join(downloadDir, newName);
+      if (fs.existsSync(oldPath)) {
+        fs.renameSync(oldPath, newPath);
+      }
+    }
+  });
+}
+
 export async function deleteInvalidFiles() {
   const brokenFiles = await db.getAllInvalidFiles();
   if (brokenFiles.length)
@@ -131,7 +149,7 @@ export async function deleteInvalidFiles() {
   for (let i = 0; i < brokenFiles.length; i++) {
     const f = brokenFiles[i];
     const { account_name, content_name, content_url } = f;
-    const location =join(downloadDir, account_name, content_name);
+    const location = join(downloadDir, account_name, content_name);
     await fs.remove(location);
     await db.setContentNotSaved(content_url);
   }
@@ -143,7 +161,7 @@ export async function deleteInvalidFiles() {
  */
 export async function downloadSpecificContent({ content_url, content_name, account_name }) {
   if (stop.now) return;
-  const downloadLocation = join(downloadDir, account_name);
+  const downloadLocation = join(downloadDir, account_name.replace(/\.$/, '._'));
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setContentSaved(content_url))
     .catch((e) => {
@@ -173,7 +191,7 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account
   }
   if (!content_url) return;
   const content_name = content_url.split('/').pop();
-  const downloadLocation = join(downloadDir, account_name, 'thumbnail');
+  const downloadLocation = join(downloadDir, account_name.replace(/\.$/, '._'), 'thumbnail');
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setThumbnailSaved(contentUrl, content_url, content_name))
     .catch((e) => {

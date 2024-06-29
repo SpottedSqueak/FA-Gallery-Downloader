@@ -1,4 +1,4 @@
-import { cleanupFileStructure, deleteInvalidFiles } from "./download-content.js";
+import { cleanupFileStructure, deleteInvalidFiles, fixInvalidUsernames } from "./download-content.js";
 
 async function fixFavoritesUsernames(db) {
   await db.exec(`
@@ -119,6 +119,9 @@ export async function upgradeDatabase(db) {
       await db.exec(`ALTER TABLE subdata ADD COLUMN content_missing INTEGER default 0`).catch(() => {});
       await db.exec(`ALTER TABLE subdata ADD COLUMN thumbnail_missing INTEGER default 0`).catch(() => {});
       version = 12;
+    case 12:
+      await fixInvalidUsernames();
+      version = 13;
     default:
       await db.exec(`VACUUM`);
       await db.exec(`PRAGMA user_version = ${version}`);

@@ -149,8 +149,11 @@ export default {
       return this.submission.is_content_saved &&
         !(this.isUnknown && this.isMissing);
     },
+    cleanAccountName() {
+      return this.submission.account_name.replace(/\.$/, '._');
+    },
     computedContentPath() {
-      return `${this.contentPath}\\${this.submission.account_name}\\${this.submission.content_name}`;
+      return `${this.contentPath}\\${this.cleanAccountName}\\${this.submission.content_name}`;
     },
     fileExtension() {
       return this.submission.content_name.split('.').pop();
