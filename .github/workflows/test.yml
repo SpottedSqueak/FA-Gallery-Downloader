@@ -1,0 +1,40 @@
+# Workflow to create a draft release whenever a tag is pushed to main
+# A lot of inspiration/techniques from: https://github.com/courselore/courselore/blob/c0b541d63fc656986ebeab4af3f3dc9bc2909972/.github/workflows/main.yml
+on:
+  push:
+    branches:
+      - main
+
+name: Test Build
+
+jobs:
+  insiders-build:
+    strategy:
+      matrix:
+        os: [windows, ubuntu]
+        include:
+          - os: windows
+            build: |
+              npx package
+              mv ../FA-Gallery-Downloader.zip ./fa-gallery-downloader-${{github.ref_name}}.zip
+            artifact: fa-gallery-downloader-${{github.ref_name}}.zip
+          - os: ubuntu
+            build: |
+              npx package
+              mv ../FA-Gallery-Downloader.tar.gz ./fa-gallery-downloader-${{github.ref_name}}.tar.gz
+            artifact: fa-gallery-downloader-${{github.ref_name}}.tar.gz
+    runs-on: ${{matrix.os}}-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.0.0
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: ${{matrix.build}}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.artifact}}
+          path: ${{matrix.artifact}}
+ 
