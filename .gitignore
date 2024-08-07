@@ -5,5 +5,5 @@ databases
 downloaded_content
 *.db
 packages
-build
 fa_gallery_downloader
+test_build

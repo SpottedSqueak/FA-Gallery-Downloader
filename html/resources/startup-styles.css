@@ -23,7 +23,12 @@ a, a:visited {
 a:hover {
   text-decoration: underline;
 }
-button {
+input[type="file"]::file-selector-button {
+  display: none;
+  margin-right: 12px;
+}
+
+button, .user-input__file::before {
   position: relative;
   border: 1px solid #69697d;
   background: #434b5b;
@@ -37,10 +42,11 @@ button:disabled {
   opacity: 0.5;
   cursor: auto;
 }
-button:hover:not(:disabled) {
+button:hover:not(:disabled), .user-input__file::before:hover {
   background: var(--component-hover-color);
 }
-button:active {
+
+button:active, .user-input__file::before:active {
   top: 1px;
 }
 img {
@@ -166,6 +172,11 @@ li > button {
   justify-content: space-evenly;
   margin: 1em 0;
 }
+.user-input__file {
+  max-width: 146px;
+  margin-top: 12px;
+  margin-right: 12px;
+}
 .account-list {
   padding-top: 8px;
 }
@@ -219,6 +230,9 @@ li > button {
 .warning {
   font-size: 0.8em;
   color: red !important;
+}
+label .warning {
+  font-size: inherit;
 }
 
 .version {

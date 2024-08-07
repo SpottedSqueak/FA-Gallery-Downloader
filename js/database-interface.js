@@ -452,7 +452,6 @@ export function getAllInvalidFiles() {
   `);
 }
 
-
 export async function getUserSettings() {
   return db.get(`SELECT * FROM usersettings`);
 }
@@ -466,7 +465,7 @@ export async function close() {
  * @returns 
  */
 export async function init() {
-  fs.ensureFileSync(dbLocation);
+  await fs.ensureFile(dbLocation);
   sqlite3.verbose();
   db = await open({
     filename: dbLocation,

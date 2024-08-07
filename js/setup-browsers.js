@@ -1,4 +1,4 @@
-import { getPromise, stop } from './utils.js';
+import { getPromise, stop, teardown } from './utils.js';
 import * as db from './database-interface.js';
 import { DEFAULT_BROWSER_PARAMS, BROWSER_DIR, IGNORE_DEFAULT_PARAMS, DOWNLOADED_BROWSER_DIR } from './constants.js';
 import { getChromePath, getChromiumPath } from 'browser-paths';
@@ -9,7 +9,6 @@ import puppeteer from 'puppeteer-extra';
 import * as pBrowsers from '@puppeteer/browsers';
 import adBlocker from 'puppeteer-extra-plugin-adblocker';
 import stealthPlugin from 'puppeteer-extra-plugin-stealth';
-import process from 'node:process';
 
 // Puppeteer setup
 puppeteer.use(adBlocker({ blockTrackers: true }));
@@ -80,14 +79,13 @@ export async function setupBrowser() {
   const browser = await puppeteer.launch(opts);
   let page = await browser.pages().then(p => p[0]);
   page.setDefaultNavigationTimeout(0);
-  // Close program when main page is closed
+
   page.on('close', async () => {
     stop.now = true;
-    setTimeout(() => {
-      db.close().finally(() => {
-        setTimeout(() => { process.exit(1) }, 1000);
-      });
-    }, 1000);
+    await teardown();
+    await db.close();
+    browser?.close();
+    console.log('Program closing...');
   });
   // Display startup page
   return { browser, page };

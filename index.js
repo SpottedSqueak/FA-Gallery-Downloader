@@ -1,14 +1,17 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, hideConsole, releaseCheck, isSiteActive, setActive } from './js/utils.js';
+import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, hideConsole, releaseCheck, isSiteActive, setActive, waitFor, setup } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import open from 'open';
+import fs from 'fs-extra/esm';
 import { setupBrowser } from './js/setup-browsers.js';
 import { init as exportData } from './js/export-data.js';
+import { spawn } from 'node:child_process';
+import {  default as process } from 'node:process';
 
 const startupLink = join('file://', __dirname, './html/startup.html');
 
@@ -54,6 +57,8 @@ async function checkDBRepair() {
 }
 
 async function init() {
+  // Setup utils
+  setup();
   // Init database
   await db.init();
   const { page, browser } = await setupBrowser();
@@ -113,6 +118,36 @@ async function init() {
     } else if (choice === 'delete-account') {
       await db.deleteOwnedAccount(data.name);
       sendStartupInfo();
+    } else if (choice === 'import-old-data') {
+      // Check for old folder
+      const pathStr = '../fa_gallery_downloader';
+      let pathCheck = resolve(pathStr);
+      let exists = await fs.pathExists(pathCheck);
+      // Check one more folder up, just in case
+      if (!exists) {
+        pathCheck = resolve(`../${pathStr}`);
+        exists = await fs.pathExists(pathCheck);
+      }
+      // if exists, move
+      if (exists) {
+        log('Data found, shutting down...');
+        await waitFor(2000);
+        await page.close();
+        await waitFor(2000);
+        // We need to close browser to move data properly
+        await fs.emptyDir(resolve('./fa_gallery_downloader')).catch(console.error);
+        await fs.move(pathCheck, resolve('./fa_gallery_downloader'), { overwrite: true })
+          .catch(console.error);
+        // Restart process
+        spawn(process.argv.shift(), process.argv, {
+          cwd: process.cwd(),
+          detached : true,
+          stdio: "inherit"
+        });
+        console.log('Restarting...');
+      } else {
+        log('[Warn] Old data not found! Is the program in the same folder as older version?');
+      }
     }
   });
   page.on('domcontentloaded', async () => {

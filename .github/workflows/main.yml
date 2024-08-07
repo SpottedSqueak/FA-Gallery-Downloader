@@ -15,22 +15,24 @@ jobs:
         os: [windows, ubuntu]
         include:
           - os: windows
-            build: npx caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}.exe" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-            artifact: fa-gallery-downloader-${{github.ref_name}}.exe
+            build: |
+              npx package
+              mv ../FA-Gallery-Downloader.zip ./fa-gallery-downloader-${{github.ref_name}}.zip
+            artifact: fa-gallery-downloader-${{github.ref_name}}.zip
           - os: ubuntu
             build: |
-              npx caxa -i . -o "fa-gallery-downloader-${{github.ref_name}}" -m "Unpackaging, please wait..." -e "./.**" "fa_gallery_downloader" "build" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/index.js"
-              tar -czf "fa-gallery-downloader-${{github.ref_name}}.tgz" "fa-gallery-downloader-${{github.ref_name}}"
-            artifact: fa-gallery-downloader-${{github.ref_name}}.tgz
+              npx package
+              mv ../FA-Gallery-Downloader.tar.gz ./fa-gallery-downloader-${{github.ref_name}}.tar.gz
+            artifact: fa-gallery-downloader-${{github.ref_name}}.tar.gz
     runs-on: ${{matrix.os}}-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16.20.0
+          node-version: 22.0.0
       - run: npm ci
       - run: ${{matrix.build}}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{matrix.artifact}}
           path: ${{matrix.artifact}}
@@ -39,12 +41,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
-          name: fa-gallery-downloader-${{github.ref_name}}.exe
-      - uses: actions/download-artifact@v2
+          name: fa-gallery-downloader-${{github.ref_name}}.zip
+      - uses: actions/download-artifact@v4
         with:
-          name: fa-gallery-downloader-${{github.ref_name}}.tgz
+          name: fa-gallery-downloader-${{github.ref_name}}.tar.gz
       - uses: actions/create-release@v1
         id: create-release
         env:
@@ -58,14 +60,14 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           upload_url: ${{steps.create-release.outputs.upload_url}}
-          asset_path: fa-gallery-downloader-${{github.ref_name}}.exe
-          asset_name: fa-gallery-downloader-${{github.ref_name}}.exe
-          asset_content_type: application/vnd.microsoft.portable-executable
+          asset_path: fa-gallery-downloader-${{github.ref_name}}.zip
+          asset_name: fa-gallery-downloader-${{github.ref_name}}.zip
+          asset_content_type: application/zip
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           upload_url: ${{steps.create-release.outputs.upload_url}}
-          asset_path: fa-gallery-downloader-${{github.ref_name}}.tgz
-          asset_name: fa-gallery-downloader-${{github.ref_name}}.tgz
+          asset_path: fa-gallery-downloader-${{github.ref_name}}.tar.gz
+          asset_name: fa-gallery-downloader-${{github.ref_name}}.tar.gz
           asset_content_type: application/gzip

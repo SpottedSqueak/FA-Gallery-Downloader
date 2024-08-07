@@ -34,7 +34,7 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "caxa": "^3.0.1",
+    "@radically-straightforward/package": "^2.0.1",
     "eslint": "^8.41.0"
   },
   "optionalDependencies": {

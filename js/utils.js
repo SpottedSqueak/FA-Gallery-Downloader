@@ -55,10 +55,11 @@ export function getPromise(method) {
 }
 // Create debug log
 const logFileName = join(logDir, `debug-${Date.now()}.log`);
+let logFile = null;
 
-function setup() {
+export function setup() {
   fs.ensureFileSync(logFileName);
-  const logFile = fs.createWriteStream(logFileName, { flags : 'w' });
+  logFile = fs.createWriteStream(logFileName, { flags : 'w' });
   const hooks = ['log', 'error', 'info', 'warn', 'debug'];
   const defaultHooks = {};
   hooks.forEach((hook) => {
@@ -81,6 +82,10 @@ function setup() {
       fs.remove(join(logDir, val));
     });
   });
+}
+export async function teardown() {
+  await logFile.close();
+  process.removeAllListeners('uncaughtException');
 }
 
 /**
@@ -190,5 +195,3 @@ export async function init(newPage) {
       .catch(() => () => {});
   }
 }
-
-setup();

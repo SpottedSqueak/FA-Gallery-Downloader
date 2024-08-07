@@ -23,6 +23,12 @@ export default {
         <button id="view-gallery" @click.prevent="viewGallery">View Gallery</button>
         <button id="stop-all" :disabled="notActive" @click.prevent="stopAll">Stop</button>
       </div>
+      <div class="user-input__old_downloads">
+        <label for="old_downloads"><span class="warning">Missing Data?</span> Import data from a previous install:</label>
+        <br/>
+        <button class="user-input__file" type="file" id="old_downloads" @click.prevent="importData">Import data</button>
+        <i class="user-input__file-path">(Previous data should be in the same folder as this program)</i>
+      </div>
     </form>
     <div class="account-list">
       <h3>Verified Accounts</h3>
@@ -92,6 +98,9 @@ export default {
       if (window.confirm(`Remove account: [${name}]? \nNOTE: You'll need to login again to access it.`)) {
         this.$emit('sendEvent', { choice: 'delete-account', name });
       }
-    }
+    },
+    importData() {
+      this.$emit('sendEvent', { choice: 'import-old-data' });
+    },
   }
 }
