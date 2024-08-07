@@ -13,7 +13,7 @@
     "lint:fix": "eslint js --fix --ext .js",
     "lint:init": "eslint --init",
     "test": "npm run lint:fix",
-    "build": "npx package"
+    "build": "npm ci && npx package"
   },
   "dependencies": {
     "@puppeteer/browsers": "^2.2.3",
