@@ -11,7 +11,7 @@ Install: `npm i`
 
 Run: `npm run start`
 
-Build: `npm run build:windows` | `npm run build:linux` | `npm run build:mac`
+Build: `npm run build`
 
 Database is `sqlite` and can be read with something like [DB Browser](https://sqlitebrowser.org/)
 
@@ -27,7 +27,7 @@ You can browse via the file system, or the *slick built-in replica-FA gallery vi
 
 ***Why is a browser needed?*** A lot of users have their galleries hidden from site visitors, so this is the easiest way to consistently ensure access to galleries. This is done almost the exact same way [Postybirb](https://www.postybirb.com/) does it! Futhermore, the login is used to determine if the gallery you're downloading is one that you own, for future uploading to other sites via Postybirb importing.
 
-You'll need [Caxa](https://www.npmjs.com/package/caxa) to build the application bundle for your OS. Then run one of the build commands listed above to build for those environments (tested in Windows and Linux/Ubuntu). Or just download the latest from the Releases, whatever's easiest.
+You'll need Thanks to [@radically-straightforward/package](https://github.com/radically-straightforward/radically-straightforward/tree/main/package) to build the application bundle for your OS. The resulting zip/gzip file will be a sibling of the extracted folder. Note that it will copy ALL files in the current directory, so you might want to copy only the files needed (no `.git` files or the entire `fa_gallery_downloader` folder) and run the build command in that folder instead. Or just download the latest from the Releases, whatever's easiest.
 
 
 ## How it works
@@ -40,6 +40,9 @@ It supports resuming, as it can take upwards of half an hour to fully download l
 
 I hope it helps, it's always a good idea to not put all your eggs in one basket.
 
+## Updating from v1.4 and below
+
+Extract the zip folder in the same location as the previous version's executable. Run the new program and click the "Import Data" button. Assuming you have the `fa_gallery_downloader` folder in the same folder, it will copy over all of that data and restart.
 
 ## #DONE
 
@@ -59,7 +62,7 @@ I hope it helps, it's always a good idea to not put all your eggs in one basket.
 
 ## Known Issues
 
-- Sometimes, after an update, the program might crash and be unable to start. Try deleting the entire Caxa folder in your OS temp folder (`%TEMP%` on Windows, `/tmp` on Ubuntu) and running it again to reinstall.
+-- See the issues tab above!
 
 Check out my stuff on FA if you'd like!
 

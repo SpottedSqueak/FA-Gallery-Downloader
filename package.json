@@ -13,9 +13,7 @@
     "lint:fix": "eslint js --fix --ext .js",
     "lint:init": "eslint --init",
     "test": "npm run lint:fix",
-    "build:windows": "caxa -i . -o \"./build/fa-gallery-downloader.exe\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:mac": "caxa -i . -o \"./build/fa-gallery-downloader.app\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\"",
-    "build:linux": "caxa -i . -o \"./build/fa-gallery-downloader.sh\" -m \"Unpackaging, please wait...\" -e \"./.**\" \"fa_gallery_downloader\" \"build\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/index.js\""
+    "build": "npx package"
   },
   "dependencies": {
     "@puppeteer/browsers": "^2.2.3",
