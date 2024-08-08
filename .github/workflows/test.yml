@@ -25,15 +25,13 @@ jobs:
             artifact: fa-gallery-downloader-${{github.ref_name}}.tar.gz
     runs-on: ${{matrix.os}}-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
         with:
           node-version: 22.0.0
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: ${{matrix.build}}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@main
         with:
           name: ${{matrix.artifact}}
           path: ${{matrix.artifact}}
