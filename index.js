@@ -7,7 +7,7 @@ import { initDownloads } from './js/download-content.js';
 import { initGallery } from './js/view-gallery.js';
 import { join, resolve } from 'node:path';
 import open from 'open';
-import fs from 'fs-extra/esm';
+import fs from 'fs-extra';
 import { setupBrowser } from './js/setup-browsers.js';
 import { init as exportData } from './js/export-data.js';
 import { spawn } from 'node:child_process';
