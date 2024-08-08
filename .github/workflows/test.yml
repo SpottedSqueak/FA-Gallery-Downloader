@@ -28,10 +28,10 @@ jobs:
       - uses: actions/checkout@main
       - uses: actions/setup-node@main
         with:
-          node-version: 22.0.0
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
-      - run: npm i
+      - run: npm ci
       - run: ${{matrix.build}}
       - uses: actions/upload-artifact@main
         with:
