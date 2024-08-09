@@ -4,8 +4,8 @@ export default {
   <div class="user-input-container">
     <form class="user-input" @submit.prevent="sendData">
       <p class="user-input__gallery-options">
-        <label for="username">Gallery to download:</label>
-        <input type="text" id="username" v-model.trim="username" placeholder="Enter a username:" />
+        <label for="username">Galleries to download:</label>
+        <input type="text" id="username" v-model.trim="username" placeholder="username1, username2, etc..." />
         <button id="start-download">{{downloadText}}</button>
       </p>
       <div class="user-input__scrape-options">
@@ -69,7 +69,7 @@ export default {
       return this.isLoggedIn ? 'Switch Accounts': 'Login';
     },
     downloadText() {
-      return (this.username) ? 'Download User Gallery' : 'Continue Previous Download';
+      return (this.username) ? 'Download User Galleries' : 'Continue Previous Download';
     }
   },
   methods: {

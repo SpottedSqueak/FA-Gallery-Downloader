@@ -162,6 +162,9 @@ li > button {
 .user-input__gallery-options button {
   align-self: stretch;
 }
+.user-input__gallery-options input {
+  flex-grow: 2;
+}
 .user-input__scrape-options {
   display: flex;
   align-items: center;

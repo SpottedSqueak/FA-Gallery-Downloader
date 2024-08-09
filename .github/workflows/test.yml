@@ -33,8 +33,4 @@ jobs:
           cache-dependency-path: '**/package-lock.json'
       - run: npm ci
       - run: ${{matrix.build}}
-      - uses: actions/upload-artifact@main
-        with:
-          name: ${{matrix.artifact}}
-          path: ${{matrix.artifact}}
  

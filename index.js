@@ -16,32 +16,40 @@ import {  default as process } from 'node:process';
 const startupLink = join('file://', __dirname, './html/startup.html');
 
 let inProgress = false;
-async function downloadPath(name = username, scrapeGallery = true, scrapeComments = true, scrapeFavorites) {
+async function startDataScraping(uName = username, scrapeGallery = true, scrapeComments = true, scrapeFavorites) {
   if (inProgress) return log('[Data] Program already running!');
-  if (name) {
+  if (uName) {
     inProgress = true;
-    const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
-    const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;
-    const FA_FAVORITES_URL = `${FA_URL_BASE}/favorites/${name}/`;
+    const allNames = uName.split(',').map(n => n.trim()).filter(n => !!n);
+    let name = allNames.shift();
+    while (name && !stop.now) {
+      const FA_GALLERY_URL = `${FA_URL_BASE}/gallery/${name}/`;
+      const FA_SCRAPS_URL = `${FA_URL_BASE}/scraps/${name}/`;
+      const FA_FAVORITES_URL = `${FA_URL_BASE}/favorites/${name}/`;
 
-    // Check if valid username
-    const $ = await getHTML(FA_USER_BASE + name).catch(() => false);
-    if (!$ || /system.error/i.test($('title').text())) {
-      return log(`[Warn] Invalid username: ${name}`);
+      // Check if valid username
+      const $ = await getHTML(FA_USER_BASE + name).catch(() => false);
+      if (!$ || /system.error/i.test($('title').text())) {
+        log(`[Warn] Invalid username: ${name}`);
+        continue;
+      }
+      // Scrape data from gallery pages
+      if (scrapeGallery) {
+        await getSubmissionLinks({ url: FA_GALLERY_URL });
+        await getSubmissionLinks({ url: FA_SCRAPS_URL, isScraps: true });
+      }
+      if (scrapeFavorites)
+        await getSubmissionLinks({ url: FA_FAVORITES_URL, isFavorites: true, username: name });
+      name = allNames.shift();
     }
-    // Scrape data from gallery pages
-    if (scrapeGallery) {
-      await getSubmissionLinks({ url: FA_GALLERY_URL });
-      await getSubmissionLinks({ url: FA_SCRAPS_URL, isScraps: true });
-    }
-    if (scrapeFavorites) await getSubmissionLinks({ url: FA_FAVORITES_URL, isFavorites: true, username: name });
+    if (stop.now) log('[Data] Process halted!');
   } else {
     log('[Data] Continuing previous download...');
   }
   // Scrape data from collected submission pages
   Promise.all([
     scrapeSubmissionInfo({ downloadComments: scrapeComments }),
-    initDownloads(name),
+    initDownloads(),
   ]).then(() => {
     if(!stop.now) log('Requested downloads complete! ♥');
   }).finally(() => {
@@ -80,7 +88,7 @@ async function init() {
       await checkForOldTheme();
       await sendStartupInfo();
       const { name, scrapeGallery, scrapeComments, scrapeFavorites } = data;
-      downloadPath(name, scrapeGallery, scrapeComments, scrapeFavorites);
+      startDataScraping(name, scrapeGallery, scrapeComments, scrapeFavorites);
     } else if (choice === 'view-gallery') {
       log(`[Data] Opening gallery viewer...`);
       initGallery(browser);

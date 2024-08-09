@@ -259,9 +259,9 @@ async function startThumbnailDownloads() {
   return startThumbnailDownloads();
 }
 
-async function startAllDownloads(name) {
+async function startAllDownloads() {
   await Promise.all([
-    startContentDownloads(name),
+    startContentDownloads(),
     startThumbnailDownloads(),
   ]);
   resetTotals();
@@ -271,11 +271,11 @@ async function startAllDownloads(name) {
  * Starts the download loop for all content.
  * @returns 
  */
-export async function initDownloads(name) {
+export async function initDownloads() {
   resetTotals();
   await fs.ensureDir(downloadDir, dlOptions);
   await waitFor(5000);
   if (stop.now) return;
   log('[File] Starting downloads...', progressID);
-  return startAllDownloads(name);
+  return startAllDownloads();
 }
