@@ -16,7 +16,7 @@ export default {
         <input id="username" list="usernameList" ref="username" type="text" placeholder="Search for username" v-model="username" @input="startSearch"
         autocomplete="off" />
         <datalist id="usernameList">
-          <option v-for="n in listInfo">{{n.username}}</option>
+          <option v-for="n in listInfo">{{n}}</option>
         </datalist>
       </div>
       <div class="gallery-controls__search-container">
@@ -49,7 +49,8 @@ export default {
   },
   computed: {
     listInfo() {
-      return this.galleryType ? this.favUsernames : this.usernames; 
+      let names = this.galleryType ? this.favUsernames : this.usernames; 
+      return [...new Set(names.map(n => n.username))];
     }
   },
   methods: {

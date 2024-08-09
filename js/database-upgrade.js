@@ -122,6 +122,7 @@ export async function upgradeDatabase(db) {
     case 12:
       await fixInvalidUsernames();
       version = 13;
+      
     default:
       await db.exec(`VACUUM`);
       await db.exec(`PRAGMA user_version = ${version}`);

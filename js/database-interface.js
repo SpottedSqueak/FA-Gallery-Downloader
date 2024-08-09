@@ -17,6 +17,7 @@ function genericInsert(table, columns, placeholders, data) {
   VALUES ${placeholders.join(',')}
 `, ...data);
 }
+
 export function deleteSubmission(url) {
   return db.exec(`
     DELETE FROM subdata
@@ -26,7 +27,7 @@ export function deleteSubmission(url) {
 /**
  * Marks the given content_url as saved (downloaded).
  * @param {String} content_url 
- * @returns Database Promise
+ * @returns {Promise<null>}
  */
 export function setContentSaved(content_url) {
   return db.run(`
@@ -40,7 +41,7 @@ export function setContentSaved(content_url) {
 /**
  * Marks the given content_url as not saved (invalid file).
  * @param {String} content_url 
- * @returns Database Promise
+ * @returns {Promise<null>}
  */
 export function setContentNotSaved(content_url) {
   return db.run(`
@@ -89,7 +90,7 @@ export function setThumbnailSaved(url, thumbnail_url, thumbnail_name) {
  * Takes the given data for the given url and updates the appropriate database columns.
  * @param {String} url 
  * @param {Object} d 
- * @returns Database Promise
+ * @returns {Promise<null>}
  */
 export function saveMetaData(url, d) {
   const data = [];
@@ -109,18 +110,18 @@ export function saveMetaData(url, d) {
  * for later updating.
  * @param {Array<Strings>} links 
  * @param {Boolean} isScraps 
- * @returns 
+ * @returns {Promise<null>}
  */
-export function saveLinks(links, isScraps = false) {
+export function saveLinks(links, isScraps = false, username) {
   let placeholder = [];
   const data = links.reduce((acc, val) => {
-    let data = [val, isScraps, false];
+    let data = [val, username, isScraps, false];
     let marks = `(${data.map(()=>'?').join(',')})`;
     acc.push(...data);
     placeholder.push(marks);
     return acc;
     }, []);
-  return genericInsert('subdata', 'url, is_scrap, is_content_saved', placeholder, data);
+  return genericInsert('subdata', 'url, username, is_scrap, is_content_saved', placeholder, data);
 }
 export function saveComments(comments) {
   let placeholder = [];
@@ -265,9 +266,10 @@ export function getGalleryPage(offset = 0, count = 25, query = {}, sortOrder ='D
   return db.all(dbQuery);
 }
 /**
- * Returns all submission info
+ * Gets all submission info for given id.
+ * 
  * @param {String} id 
- * @returns 
+ * @returns {Promise<Object>}
  */
 export async function getSubmissionPage(id) {
   const data = {};
@@ -293,8 +295,9 @@ export function getAllUnmovedContentData() {
   `);
 }
 /**
- * Retrieves all unsaved content to download.
- * @returns Database Promise that resolves to results of query
+ * Finds all data with content not yet downloaded.
+ * 
+ * @returns {Promise<Array>}
  */
 export function getAllUnsavedContent(name) {
   const nameQuery = name ? `AND 
@@ -328,8 +331,8 @@ export function getAllUnsavedThumbnails() {
   `);
 }
 /**
- * Returns all entries without necessary data.
- * @returns 
+ * Queries for all entries without necessary data.
+ * @returns {Promise<Array>} All entries in need of repair
  */
 export function needsRepair(username) {
   let usernameQuery = '';
@@ -374,7 +377,7 @@ export function getAllUsernames() {
 /**
  * Retrieves all submission links with uncollected data.
  * @param {Boolean} isScraps 
- * @returns Promise that resolves to all matching Database rows
+ * @returns {Promise<Array>} All matching Database rows
  */
 export function getSubmissionLinks() {
   return db.all(`
@@ -382,7 +385,7 @@ export function getSubmissionLinks() {
     FROM subdata
     WHERE id IS null
     ORDER BY url DESC
-    `);
+  `);
 }
 
 export function getComments(id) {
@@ -430,14 +433,14 @@ export function getAllSubmissionsForUser(username) {
 }
 /**
  * 
- * @returns All data in the database
+ * @returns {Promise<Array>} All submission data in the database
  */
 export function getAllSubmissionData() {
   return db.all('SELECT url from subdata');
 }
 /**
  * 
- * @returns All complete data in the database
+ * @returns {Promise<Array>} All complete submission data in the database
  */
 export function getAllCompleteSubmissionData() {
   return db.all('SELECT * from subdata WHERE id IS NOT NULL');
@@ -458,6 +461,29 @@ export async function getUserSettings() {
 
 export async function close() {
   return db.close().catch(() => console.log('Database already closed!'));
+}
+/**
+ * Deletes all info related to the given amount from submission data and favorites.
+ * 
+ * @param {String} name 
+ * @returns {Promise<null>}
+ */
+export async function deleteAccount(name) {
+  await db.run(`
+    DELETE FROM subdata
+    WHERE account_name = ?
+    OR username = ?
+  `, [name, name]);
+  return db.run(`
+    DELETE FROM favorites
+    WHERE username = ?
+  `, [name]);
+}
+export async function deleteBlankSubmissionInfo() {
+  return db.run(`
+    DELETE FROM subdata
+    WHERE username IS NULL
+  `);
 }
 
 /**

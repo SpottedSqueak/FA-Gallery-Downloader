@@ -18,7 +18,7 @@ export default {
           <span>by SpottedSqueak</span>
         </h2>
       </div>
-      <startup-form :is-logged-in="!!this.username" :outsideUsername="queryName" :outsideActive="isActive" :accounts="accounts" @send-data="sendFormData" @send-event="sendEvent"></startup-form>
+      <startup-form :is-logged-in="!!this.username" :outsideUsername="queryName" :outsideActive="isActive" :accounts="accounts" :download-accounts="downloadAccounts" @send-data="sendFormData" @send-event="sendEvent"></startup-form>
       <status-display :msg="msg" :log-progress="logProgress" @clear-msg="clearMsg"></status-display>
       <div class="version">
         <span v-if="!version">Loading version...</span>
@@ -42,6 +42,7 @@ export default {
       logProgress: {},
       isActive: false,
       accounts: [],
+      downloadAccounts: [],
       version: '',
       newVersion: '',
       githubLink: 'https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases',
@@ -60,6 +61,7 @@ export default {
       if (data.accounts) this.accounts = data.accounts;
       if (data.current) this.version = data.current;
       if (data.latest) this.newVersion = data.latest;
+      if (data.downloadAccounts) this.downloadAccounts = data.downloadAccounts;
     };
     window.setActive = (val = true) => {
       this.isActive = val;

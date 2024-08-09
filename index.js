@@ -35,8 +35,8 @@ async function startDataScraping(uName = username, scrapeGallery = true, scrapeC
       }
       // Scrape data from gallery pages
       if (scrapeGallery) {
-        await getSubmissionLinks({ url: FA_GALLERY_URL });
-        await getSubmissionLinks({ url: FA_SCRAPS_URL, isScraps: true });
+        await getSubmissionLinks({ url: FA_GALLERY_URL, username: name });
+        await getSubmissionLinks({ url: FA_SCRAPS_URL, isScraps: true, username: name });
       }
       if (scrapeFavorites)
         await getSubmissionLinks({ url: FA_FAVORITES_URL, isFavorites: true, username: name });
@@ -86,9 +86,10 @@ async function init() {
     } else if (choice === 'start-download') {
       if (!await checkIfLoggedIn(browser)) await handleLogin();
       await checkForOldTheme();
-      await sendStartupInfo();
       const { name, scrapeGallery, scrapeComments, scrapeFavorites } = data;
       startDataScraping(name, scrapeGallery, scrapeComments, scrapeFavorites);
+      await waitFor(3000);
+      await sendStartupInfo();
     } else if (choice === 'view-gallery') {
       log(`[Data] Opening gallery viewer...`);
       initGallery(browser);
@@ -103,6 +104,7 @@ async function init() {
       log('[Data] Checking database...');
       inProgress = true;
       setActive(true);
+      await db.deleteBlankSubmissionInfo();
       const inNeedOfRepair = await db.needsRepair();
       if (inNeedOfRepair.length) {
         logLast('Database incomplete! Working on that now...');
@@ -115,7 +117,7 @@ async function init() {
       } else {
         inProgress = false;
         setActive(false);
-        logLast(`Database OK!`);
+        logLast(`[Data] Database OK!`);
       }
     } else if (choice === 'export-data') {
       setActive(true);
@@ -124,7 +126,12 @@ async function init() {
     } else if (choice === 'release-check') {
       sendStartupInfo(await releaseCheck());
     } else if (choice === 'delete-account') {
+      stop.now = true;
       await db.deleteOwnedAccount(data.name);
+      sendStartupInfo();
+    } else if(choice === 'delete-user-account') {
+      stop.now = true;
+      await db.deleteAccount(data.name);
       sendStartupInfo();
     } else if (choice === 'import-old-data') {
       // Check for old folder

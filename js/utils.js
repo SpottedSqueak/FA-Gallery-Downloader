@@ -175,8 +175,9 @@ export async function isSiteActive() {
   return urlExists(FA_URL_BASE);
 }
 export async function sendStartupInfo(data = {}) {
-  if (!data.username) data.username = username;
-  if (!data.accounts) data.accounts = await db.getOwnedAccounts();
+  data.username = data.username || username;
+  data.accounts = data.accounts || await db.getOwnedAccounts();
+  data.downloadAccounts = data.downloadAccounts || await db.getAllUsernames();
   return page.evaluate(`window.setPageInfo?.(${JSON.stringify(data)})`);
 }
 export async function setActive(val = true) {

@@ -1,7 +1,7 @@
 import random from 'random';
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
-import { log, logProgress, waitFor, getHTML, stop } from './utils.js';
+import { log, logProgress, waitFor, getHTML, stop, sendStartupInfo } from './utils.js';
 
 const scrapeID = 'scrape-div';
 const progressID = 'data';
@@ -34,7 +34,7 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
       // log(`[Data] Found ${currPageCount} pages of submissions!`, divID);
       break;
     }
-    await db.saveLinks(newLinks, isScraps).catch(() => stopLoop = true);
+    await db.saveLinks(newLinks, isScraps, username).catch(() => stopLoop = true);
     if (stopLoop || stop.now) {
       log('[Data] Stopped early!');
       logProgress.reset(progressID);
@@ -52,6 +52,7 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
   }
   if (!stop.now) log(`[Data] ${currLinks} submissions found!`);
   logProgress.reset(progressID);
+  await sendStartupInfo();
 }
 /**
  * Gathers and saves the comments from given HTML or url.

@@ -30,19 +30,34 @@ export default {
         <i class="user-input__file-path">(Previous data should be in the same folder as this program)</i>
       </div>
     </form>
-    <div class="account-list">
-      <h3>Verified Accounts</h3>
-      <p>Login to an account to see it listed here!</p>
-      <ul>
-        <template v-for="name in accounts">
-          <li><span>{{name}}</span> <button @click.prevent="exportData(name)" alt="Export to Postybirb" title="Export to Postybirb">Export: Postybirb</button><button @click.prevent="deleteAccount(name)" alt="Delete account name" title="Delete account name">❌</button></li>
-        </template>
-      </ul>
+    <div class="account-list" ref="tabContainer">
+      <div class="tab-container" @click.prevent="tabClick">
+        <h3 class="tab active">Verified Accounts</h3>
+        <h3 class="tab">All Accounts</h3>
+      </div>
+      <div class="tab-content-container active">
+        <p>Login to an account to see it listed here!</p>
+        <ul>
+          <template v-for="name in accounts">
+            <li><span>{{name}}</span> <button @click.prevent="exportData(name)" alt="Export to Postybirb" title="Export to Postybirb">Export: Postybirb</button><button @click.prevent="deleteAccount(name)" alt="Delete account name" title="Delete account name">❌</button></li>
+          </template>
+        </ul>
+      </div>
+      <div class="tab-content-container">
+        <p>All downloaded accounts</p>
+        <ul>
+          <template v-for="name in computedDownloadAccounts">
+            <li>
+              <span>{{name}}</span><button @click.prevent="deleteUserAccount(name)" alt="Delete account" title="Delete account">❌</button>
+            </li>
+          </template>
+        </ul>
+      </div>
     </div>
   </div>
   `,
   emits: ['sendData', 'sendEvent'],
-  props: ['outsideUsername', 'isLoggedIn', 'outsideActive', 'accounts'],
+  props: ['outsideUsername', 'isLoggedIn', 'outsideActive', 'accounts', 'downloadAccounts'],
   data() {
     return {
       username: '',
@@ -70,7 +85,11 @@ export default {
     },
     downloadText() {
       return (this.username) ? 'Download User Galleries' : 'Continue Previous Download';
-    }
+    },
+    computedDownloadAccounts() {
+      if (!this.downloadAccounts?.length) return [];
+      return [...new Set(this.downloadAccounts.map(d => d.username))];
+    },
   },
   methods: {
     login() {
@@ -99,8 +118,30 @@ export default {
         this.$emit('sendEvent', { choice: 'delete-account', name });
       }
     },
+    deleteUserAccount(name) {
+      if (window.confirm(`Remove account: [${name}]? \nNOTE: Will delete all associated submissions and favorites.`)) {
+        this.$emit('sendEvent', { choice: 'delete-user-account', name });
+      }
+    },
     importData() {
       this.$emit('sendEvent', { choice: 'import-old-data' });
     },
+    tabClick(e) {
+      if (!e.target.classList.contains('tab')) return;
+      const divs = [...e.target.parentNode.children];
+      divs.forEach(e => e.classList.remove('active'));
+      e.target.classList.add('active');
+      divs.some((e, i) => {
+        if (e.classList.contains('active')) {
+          this.activateTab(i);
+          return true;
+        }
+      });
+    },
+    activateTab(index) {
+      const divs = this.$refs.tabContainer.querySelectorAll('.tab-content-container');
+      divs.forEach(e => e.classList.remove('active'));
+      divs[index].classList.add('active');
+    }
   }
 }
