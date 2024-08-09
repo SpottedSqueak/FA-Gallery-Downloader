@@ -5,7 +5,7 @@
 ### [> Download Latest Release <](https://github.com/SpottedSqueak/FA-Gallery-Downloader/releases)
 ---
 ## Dev Info
-Built using `node v22.0.0` and `npm v10.5.1`
+Built using `node v22.6.0` and `npm v10.5.1`
 
 Install: `npm i`
 
@@ -27,7 +27,7 @@ You can browse via the file system, or the *slick built-in replica-FA gallery vi
 
 ***Why is a browser needed?*** A lot of users have their galleries hidden from site visitors, so this is the easiest way to consistently ensure access to galleries. This is done almost the exact same way [Postybirb](https://www.postybirb.com/) does it! Futhermore, the login is used to determine if the gallery you're downloading is one that you own, for future uploading to other sites via Postybirb importing.
 
-You'll need Thanks to [@radically-straightforward/package](https://github.com/radically-straightforward/radically-straightforward/tree/main/package) to build the application bundle for your OS. The resulting zip/gzip file will be a sibling of the extracted folder. Note that it will copy ALL files in the current directory, so you might want to copy only the files needed (no `.git` files or the entire `fa_gallery_downloader` folder) and run the build command in that folder instead. Or just download the latest from the Releases, whatever's easiest.
+You'll need [@radically-straightforward/package](https://github.com/radically-straightforward/radically-straightforward/tree/main/package) to build the application bundle for your OS. The resulting zip/gzip file will be a sibling of the extracted folder. Note that it will copy ALL files in the current directory, so you might want to copy only the files needed (no `.git` files or the entire `fa_gallery_downloader` folder) and run the build command in that folder instead. Or just download the latest Release, whatever's easiest.
 
 
 ## How it works
