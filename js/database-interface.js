@@ -67,12 +67,12 @@ export function setContentMissing(content_name) {
   WHERE content_name = '${content_name}'
   `);
 }
-export function setThumbnailMissing(thumbnail_name) {
+export function setThumbnailMissing(thumbnail_url) {
   return db.run(`
   UPDATE subdata
   SET
     thumbnail_missing = 1
-  WHERE thumbnail_name = '${thumbnail_name}'
+  WHERE thumbnail_url = '${thumbnail_url}'
   `);
 }
 export function setThumbnailSaved(url, thumbnail_url, thumbnail_name) {

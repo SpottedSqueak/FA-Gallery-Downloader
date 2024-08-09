@@ -200,7 +200,7 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account
         stop.now = true;
         return log(`[Data] FA appears to be down, stopping all downloads`);
       } else if(/not.found/gi.test(e.message)) {
-        db.setThumbnailMissing(content_name);
+        db.setThumbnailMissing(content_url);
       }
     });      
 }
