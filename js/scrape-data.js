@@ -5,6 +5,7 @@ import { log, logProgress, waitFor, getHTML, stop, sendStartupInfo } from './uti
 
 const scrapeID = 'scrape-div';
 const progressID = 'data';
+const maxRetries = 6;
 
 /**
  * Walks the user's gallery in order to gather all submission links for future download.
@@ -20,12 +21,20 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
   let nextPage = ''; // Only valid if in favorites!
   log(`[Data] Searching user ${dirName} for submission links...`, divID);
   logProgress.busy(progressID);
+  let retryCount = 0;
   while(!stopLoop && !stop.now) {
     const pageUrl = (!nextPage) ? url + currPageCount : nextPage;
     let $ =  await getHTML(pageUrl).catch(() => false);
     if (!$) {
-      stop.now = true;
-      return log(`[Warn] FA might be down, please try again later`);
+      retryCount++;
+      if (retryCount < maxRetries) {
+        log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
+        await waitFor(30 * retryCount * 1000);
+        continue;
+      } else {
+        stop.now = true;
+        return log(`[Warn] FA might be down, please try again later`);
+      }
     }
     // Check for content
     let newLinks = Array.from($('figcaption a[href^="/view"]'))
@@ -62,8 +71,21 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
  */
 export async function scrapeComments($, submission_id, url) {
   if (stop.now) return logProgress.reset(progressID);
-  $ = $ || await getHTML(url).catch(() => false);
-  if (!$) return log(`[Data] Comment page not found: ${url}`);
+  let retryCount = 0;
+  do {
+    $ = $ || await getHTML(url).catch(() => false);
+    if (!$) {
+      retryCount++;
+      if (retryCount < maxRetries) {
+        log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
+        await waitFor(30 * retryCount * 1000);
+        continue;
+      } else {
+        return log(`[Data] Comment page not found: ${url}`);
+      }
+    }
+    break;
+  } while (!$);
   const comments = Array.from($('#comments-submission .comment_container'))
     .map((val) => {
       const $div = $(val);
@@ -98,6 +120,7 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
   if (!links.length || stop.now) return logProgress.reset(progressID);
   log(`[Data] Saving data for ${links.length} submissions...`, metadataID);
   let index = 0;
+  let retryCount = 0;
   while (index < links.length && !stop.now) {
     logProgress({transferred: index+1, total: links.length}, progressID);
     let $ = await getHTML(links[index].url)
@@ -114,19 +137,22 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
         return _$;
       }
     })
-    .catch(e => {
-      if (e.code === 'ERR_NON_2XX_3XX_RESPONSE') {
-        // Gonna assume deleted
-        db.deleteSubmission(links[index].url);
-      }
+    .catch(() => {
       return false;
     });
     if (!$) {
-      index++;
-      await waitFor(random.int(2000, 3500));
-      continue;
+      retryCount++;
+      if (retryCount < maxRetries / 2) {
+        log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
+        await waitFor(30 * retryCount * 1000);
+        continue;
+      } else {
+        index++;
+        await waitFor(random.int(2000, 3500));
+        continue;
+      }
     }
-    // Get data if it does
+    // Get data if page exists
     let date = $('.submission-id-sub-container .popup_date').attr('title').trim();
     if (/ago$/i.test(date)) date = $('.submission-id-sub-container .popup_date').text().trim();
     const username = $('.submission-title + a').text().trim().toLowerCase();

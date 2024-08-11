@@ -11,6 +11,7 @@ const progressID = 'file';
 const dlOptions = {
   mode: 0o770,
 };
+const maxRetries = 5;
 let thumbnailsRunning = false;
 let totalThumbnails = 0;
 let totalFiles = 0;
@@ -36,7 +37,8 @@ function getTotals() {
  * @param {String} results.content_name
  * @returns 
  */
-async function downloadSetup({ content_url, content_name, downloadLocation }) {
+async function downloadSetup({ content_url, content_name, downloadLocation, retryCount = 0 }) {
+  if (stop.now) return false;
   // Check for invalid file types to start
   if (/\.$/.test(content_name)) {
     log(`[Data] Skipping invalid file: ${content_name}`);
@@ -49,7 +51,12 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
     const fileLocation = join(downloadLocation, content_name);
     await fs.ensureDir(downloadLocation, dlOptions);
     return new Promise((resolve, reject) => {
-      const dlStream = got.stream(content_url, faRequestHeaders);
+      const dlStream = got.stream(content_url, {
+        ...faRequestHeaders,
+        ...{
+          timeout: { response: 20000 }
+        }
+      });
       const fStream = fs.createWriteStream(fileLocation, { flags: 'w+', ...dlOptions });
       dlStream.on('downloadProgress', ({ transferred, total, percent }) => {
         const percentage = Math.round(percent * 100);
@@ -77,6 +84,12 @@ async function downloadSetup({ content_url, content_name, downloadLocation }) {
         fs.removeSync(fileLocation);
       } catch (e) {
         console.error(e);
+      }
+      // Retry if possible!
+      if (retryCount < maxRetries) {
+        retryCount++;
+        log(`[Warn] Download error, retrying...`);
+        return downloadSetup({ content_url, content_name, downloadLocation, retryCount });
       }
     });
   } else {

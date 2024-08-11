@@ -11,6 +11,7 @@ import { FA_URL_BASE, RELEASE_CHECK, LOG_DIR as logDir } from './constants.js';
 
 export const isWindows = platform === 'win32';
 export const isMac = platform === 'darwin';
+const maxRetries = 5;
 
 export let hideConsole = () => {};
 
@@ -144,12 +145,18 @@ export async function log(text, id, noConsole) {
 export function getHTML(url, sendHeaders = true) {
   const headers = sendHeaders ? faRequestHeaders : {};
   headers.timeout = { response: 3000 };
-  return got(url, headers).text()
+  return got(url, { ...headers, ...{
+    timeout: { response: 3000 },
+    retry: {
+      limit: maxRetries,
+    },
+  }}).text()
   .then((result) => {
     console.log(`Loaded: ${url}`);
     return cheerio.load(result);
   }).catch((e) => {
-    console.error(e);
+    log(`[Warn] Cannot get HTML for: ${url}`);
+    // console.error(e);
     return Promise.reject(e);
   });
 }
@@ -168,7 +175,14 @@ export async function releaseCheck() {
 }
 export async function urlExists(url, sendHeaders = true) {
   let headers = sendHeaders ? faRequestHeaders : {};
-  headers = {...headers, method: 'HEAD', timeout: { response: 3000 }};
+  headers = {
+    ...headers,
+    method: 'HEAD',
+    timeout: { response: 3000 },
+    retry: {
+      limit: maxRetries,
+    },
+  };
   return got(url, headers).then(() => true).catch(() => false);
 }
 export async function isSiteActive() {
