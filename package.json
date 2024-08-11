@@ -1,6 +1,6 @@
 {
   "name": "fa-gallery-downloader",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "Dead simple gallery download for FurAffinity",
   "main": "index.js",
   "type": "module",
