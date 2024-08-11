@@ -36,6 +36,7 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
         return log(`[Warn] FA might be down, please try again later`);
       }
     }
+    retryCount = 0;
     // Check for content
     let newLinks = Array.from($('figcaption a[href^="/view"]'))
       .map((div) => FA_URL_BASE + div.attribs.href);
@@ -147,11 +148,13 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
         await waitFor(30 * retryCount * 1000);
         continue;
       } else {
+        retryCount = 0;
         index++;
         await waitFor(random.int(2000, 3500));
         continue;
       }
     }
+    retryCount = 0;
     // Get data if page exists
     let date = $('.submission-id-sub-container .popup_date').attr('title').trim();
     if (/ago$/i.test(date)) date = $('.submission-id-sub-container .popup_date').text().trim();
