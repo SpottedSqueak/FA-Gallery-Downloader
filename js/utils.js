@@ -5,7 +5,6 @@ import { dirname, join, } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
 import * as db from './database-interface.js';
-import util from 'util';
 import { exitCode, default as process, platform } from 'node:process';
 import { FA_URL_BASE, RELEASE_CHECK, LOG_DIR as logDir } from './constants.js';
 
@@ -55,21 +54,36 @@ export function getPromise(method) {
   });
 }
 // Create debug log
-const logFileName = join(logDir, `debug-${Date.now()}.log`);
+const fileOptions = { mode: 0o770 };
+const logFileName = join(logDir, `debug-${new Date().toJSON().slice(0,10)}.log`);
 let logFile = null;
+let unhookErr, unhookLog;
 
 export function setup() {
   fs.ensureFileSync(logFileName);
-  logFile = fs.createWriteStream(logFileName, { flags : 'w' });
-  const hooks = ['log', 'error', 'info', 'warn', 'debug'];
-  const defaultHooks = {};
-  hooks.forEach((hook) => {
-    defaultHooks[hook] = console[hook];
-    console[hook] = function () {
-      logFile.write(`[${hook}] ${util.format.apply(null, arguments)}\n`);
-      defaultHooks[hook](util.format.apply(null, arguments));
+  logFile = fs.createWriteStream(logFileName, { flags : 'as', encoding: 'utf8', ...fileOptions });
+  // Thanks to: https://gist.github.com/pguillory/729616 and https://stackoverflow.com/a/41135457
+  function hook_stdout(stream, callback) {
+    var old_write = stream.write;
+
+    stream.write = (function (write) {
+      return function (string, encoding, fd) {
+        write.apply(stream, arguments);
+        callback(string, encoding, fd);
+      }
+    })(stream.write);
+    return () => stream.write = old_write;
+  }
+  async function saveToLog(string, encoding) {
+    if (!page?.isClosed() && page) {
+      page.evaluate(`window.logMsg?.(${JSON.stringify({ text: string })})`);
     }
-  });
+    await logFile.write(`[${new Date().toISOString()}] ${string}`, encoding);
+  }
+  unhookLog = hook_stdout(process.stdout, saveToLog);
+  unhookErr = hook_stdout(process.stderr, saveToLog);
+  logFile.write('---\n');
+
   process.on('uncaughtException', async function(err) {
     //logFile.write(`${err.stack}`);
     stop.now = true;
@@ -85,7 +99,9 @@ export function setup() {
   });
 }
 export async function teardown() {
-  await logFile.close();
+  unhookErr();
+  unhookLog();
+  await logFile?.end();
   process.removeAllListeners('uncaughtException');
 }
 
