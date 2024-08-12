@@ -1,5 +1,5 @@
 import random from 'random';
-import { waitFor, log, logProgress, stop, getHTML, urlExists, isSiteActive } from './utils.js';
+import { waitFor, logProgress, stop, getHTML, urlExists, isSiteActive } from './utils.js';
 import { faRequestHeaders } from './login.js';
 import * as db from './database-interface.js';
 import fs from 'fs-extra';
@@ -41,7 +41,7 @@ async function downloadSetup({ content_url, content_name, downloadLocation, retr
   if (stop.now) return false;
   // Check for invalid file types to start
   if (/\.$/.test(content_name)) {
-    log(`[Data] Skipping invalid file: ${content_name}`);
+    console.log(`[Data] Skipping invalid file: ${content_name}`);
     await db.setContentNotSaved(content_url);
     return Promise.reject();
   }
@@ -75,7 +75,7 @@ async function downloadSetup({ content_url, content_name, downloadLocation, retr
           reject();
         })
         .on('finish', () => {
-          // log(`[File] Downloaded: '${content_name}'`, progressID);
+          // console.log(`[File] Downloaded: '${content_name}'`, progressID);
           resolve();
         });
       dlStream.pipe(fStream);
@@ -88,7 +88,7 @@ async function downloadSetup({ content_url, content_name, downloadLocation, retr
       // Retry if possible!
       if (retryCount < maxRetries) {
         retryCount++;
-        log(`[Warn] Download error, retrying...`);
+        console.log(`[Warn] Download error, retrying...`);
         return downloadSetup({ content_url, content_name, downloadLocation, retryCount });
       }
     });
@@ -112,7 +112,7 @@ export async function cleanupFileStructure() {
   // Move unmoved content
   const content = await db.getAllUnmovedContentData();
   if (!content.length) return;
-  log('[Data] Reorganizing files...');
+  console.log('[Data] Reorganizing files...');
   function getPromise(index) {
     if (index >= content.length) return;
     const { account_name, content_name } = content[index];
@@ -126,7 +126,7 @@ export async function cleanupFileStructure() {
       if (fs.existsSync(join(downloadDir, account_name, content_name)))
         return db.setContentMoved(content_name);
       else 
-        log(`[Warn] File not moved: ${content_name}`);
+        console.log(`[Warn] File not moved: ${content_name}`);
     });
   }
   let i = 0;
@@ -134,12 +134,12 @@ export async function cleanupFileStructure() {
     if (stop.now) return;
     await getPromise(i++);
   }
-  log(`[Data] Files reorganized by user!`);
+  console.log(`[Data] Files reorganized by user!`);
 }
 
 export async function fixInvalidUsernames() {
   const names = await db.getAllUsernames();
-  log('[Data] Renaming invalid files');
+  console.log('[Data] Renaming invalid files');
   // Rename folders with wrong names
   names.forEach(({ account_name }) => {
     // If ends with a period...
@@ -158,7 +158,7 @@ export async function fixInvalidUsernames() {
 export async function deleteInvalidFiles() {
   const brokenFiles = await db.getAllInvalidFiles();
   if (brokenFiles.length)
-    log(`[Warn] There are ${brokenFiles.length} invalid files. Deleting...`);
+    console.log(`[Warn] There are ${brokenFiles.length} invalid files. Deleting...`);
   for (let i = 0; i < brokenFiles.length; i++) {
     const f = brokenFiles[i];
     const { account_name, content_name, content_url } = f;
@@ -181,7 +181,7 @@ export async function downloadSpecificContent({ content_url, content_name, accou
       if (!e) return; // Skip if no real error
       if (/site.down/gi.test(e.message)) {
         stop.now = true;
-        return log(`[Data] FA appears to be down, stopping all downloads`);
+        return console.log(`[Data] FA appears to be down, stopping all downloads`);
       } else if(/not.found/gi.test(e.message)) {
         db.setContentMissing(content_name);
       }
@@ -211,7 +211,7 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account
       if (!e) return; // Skip if no real error
       if (/site.down/gi.test(e.message)) {
         stop.now = true;
-        return log(`[Data] FA appears to be down, stopping all downloads`);
+        return console.log(`[Data] FA appears to be down, stopping all downloads`);
       } else if(/not.found/gi.test(e.message)) {
         db.setThumbnailMissing(content_url);
       }
@@ -289,6 +289,6 @@ export async function initDownloads() {
   await fs.ensureDir(downloadDir, dlOptions);
   await waitFor(5000);
   if (stop.now) return;
-  log('[File] Starting downloads...', progressID);
+  console.log('[File] Starting downloads...', progressID);
   return startAllDownloads();
 }

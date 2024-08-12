@@ -75,10 +75,11 @@ export function setup() {
     return () => stream.write = old_write;
   }
   async function saveToLog(string, encoding) {
-    if (!page?.isClosed() && page) {
-      page.evaluate(`window.logMsg?.(${JSON.stringify({ text: string })})`);
-    }
     await logFile.write(`[${new Date().toISOString()}] ${string}`, encoding);
+
+    if (page && !page?.isClosed()) {
+      page?.evaluate(`window.logMsg?.(${JSON.stringify({ text: string })})`);
+    }
   }
   unhookLog = hook_stdout(process.stdout, saveToLog);
   unhookErr = hook_stdout(process.stderr, saveToLog);
@@ -132,27 +133,7 @@ logProgress.reset = (id) => {
 logProgress.busy = (id) => {
   if (id) logProgress({ transferred: 0, total: 0 }, id);
 }
-/**
- * Overwrites the previous log message with a new one
- * @param {String} text 
- */
-export async function logLast(text, id) {
-  if (!page?.isClosed()) {
-    const data = { text, id, replaceLast: true };
-    page.evaluate(`window.logMsg?.(${JSON.stringify(data)})`);
-  }
-  console.log(text);
-}
-/**
- * Logs a message to the user.
- * @param {String} text 
- */
-export async function log(text, id, noConsole) {
-  if (!page?.isClosed() && page) {
-    page.evaluate(`window.logMsg?.(${JSON.stringify({ text, id })})`);
-  }
-  if (!noConsole) console.log(text);
-}
+
 /**
  * Retrieves the HTML from the given URL and loads it into a Cheerio object.
  * @param {String} url 
@@ -171,7 +152,7 @@ export function getHTML(url, sendHeaders = true) {
     console.log(`Loaded: ${url}`);
     return cheerio.load(result);
   }).catch((e) => {
-    log(`[Warn] Cannot get HTML for: ${url}`);
+    console.log(`[Warn] Cannot get HTML for: ${url}`);
     // console.error(e);
     return Promise.reject(e);
   });

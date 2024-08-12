@@ -1,7 +1,7 @@
 import random from 'random';
 import { FA_URL_BASE } from './constants.js';
 import * as db from './database-interface.js';
-import { log, logProgress, waitFor, getHTML, stop, sendStartupInfo } from './utils.js';
+import { logProgress, waitFor, getHTML, stop, sendStartupInfo } from './utils.js';
 
 const scrapeID = 'scrape-div';
 const progressID = 'data';
@@ -19,7 +19,7 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
   let currLinks = 0;
   let stopLoop = false;
   let nextPage = ''; // Only valid if in favorites!
-  log(`[Data] Searching user ${dirName} for submission links...`, divID);
+  console.log(`[Data] Searching user ${dirName} for submission links...`, divID);
   logProgress.busy(progressID);
   let retryCount = 0;
   while(!stopLoop && !stop.now) {
@@ -28,12 +28,12 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
     if (!$) {
       retryCount++;
       if (retryCount < maxRetries) {
-        log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
+        console.log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
         await waitFor(30 * retryCount * 1000);
         continue;
       } else {
         stop.now = true;
-        return log(`[Warn] FA might be down, please try again later`);
+        return console.log(`[Warn] FA might be down, please try again later`);
       }
     }
     retryCount = 0;
@@ -41,12 +41,12 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
     let newLinks = Array.from($('figcaption a[href^="/view"]'))
       .map((div) => FA_URL_BASE + div.attribs.href);
     if (!newLinks.length) {
-      // log(`[Data] Found ${currPageCount} pages of submissions!`, divID);
+      // console.log(`[Data] Found ${currPageCount} pages of submissions!`, divID);
       break;
     }
     await db.saveLinks(newLinks, isScraps, username).catch(() => stopLoop = true);
     if (stopLoop || stop.now) {
-      log('[Data] Stopped early!');
+      console.log('[Data] Stopped early!');
       logProgress.reset(progressID);
       break;
     }
@@ -60,7 +60,7 @@ export async function getSubmissionLinks({ url, username, isScraps = false, isFa
     }
     await waitFor(random.int(1000, 2500));
   }
-  if (!stop.now) log(`[Data] ${currLinks} submissions found!`);
+  if (!stop.now) console.log(`[Data] ${currLinks} submissions found!`);
   logProgress.reset(progressID);
   await sendStartupInfo();
 }
@@ -78,11 +78,11 @@ export async function scrapeComments($, submission_id, url) {
     if (!$) {
       retryCount++;
       if (retryCount < maxRetries) {
-        log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
+        console.log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
         await waitFor(30 * retryCount * 1000);
         continue;
       } else {
-        return log(`[Data] Comment page not found: ${url}`);
+        return console.log(`[Data] Comment page not found: ${url}`);
       }
     }
     break;
@@ -119,7 +119,7 @@ const metadataID = 'scrape-metadata';
 export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
   let links = data || await db.getSubmissionLinks();
   if (!links.length || stop.now) return logProgress.reset(progressID);
-  log(`[Data] Saving data for ${links.length} submissions...`, metadataID);
+  console.log(`[Data] Saving data for ${links.length} submissions...`, metadataID);
   let index = 0;
   let retryCount = 0;
   while (index < links.length && !stop.now) {
@@ -128,10 +128,10 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
     .then(_$ => {
       if (!_$ || !_$('.submission-title').length) {
         if(_$('.section-body').text().includes('The submission you are trying to find is not in our database.')) {
-          log(`[Error] Confirmed deleted, removing: ${links[index].url}`);
+          console.log(`[Error] Confirmed deleted, removing: ${links[index].url}`);
           db.deleteSubmission(links[index].url);
         } else {
-          log(`[Error] Not found/deleted: ${links[index].url}`);
+          console.log(`[Error] Not found/deleted: ${links[index].url}`);
         }
         return false;
       } else {
@@ -144,7 +144,7 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
     if (!$) {
       retryCount++;
       if (retryCount < maxRetries / 2) {
-        log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
+        console.log(`[Warn] FA might be down, retrying in ${30 * retryCount} seconds`);
         await waitFor(30 * retryCount * 1000);
         continue;
       } else {
@@ -184,6 +184,6 @@ export async function scrapeSubmissionInfo({ data = null, downloadComments }) {
     index++;
     if (index % 2) await waitFor(random.int(1000, 2500));
   }
-  if (!stop.now) log('[Data] All submission metadata saved!');
+  if (!stop.now) console.log('[Data] All submission metadata saved!');
   logProgress.reset(progressID);
 }

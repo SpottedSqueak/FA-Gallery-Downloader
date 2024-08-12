@@ -81,6 +81,7 @@ export default {
         this.msgs.shift();
     },
     addToStatus(msg) {
+      msg.text = msg.text?.trim();
       if (msg.id && msg.replaceLast) {
         const index = this.msgs.indexOf((val) => val.id === msg.id);
         if(index) this.msgs[index].text = msg.text;

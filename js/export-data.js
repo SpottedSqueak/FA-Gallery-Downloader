@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import { scrapeSubmissionInfo } from './scrape-data.js';
 import { startUserContentDownloads } from './download-content.js';
 import { DOWNLOAD_DIR, EXPORT_DIR } from './constants.js';
-import { log, stop } from './utils.js';
+import { stop } from './utils.js';
 import * as db from './database-interface.js'
 
 const dlOptions = {
@@ -26,18 +26,18 @@ async function exportData(name) {
   const inNeedOfRepair = await db.needsRepair(name);
   const needsDownload = await db.getAllUnsavedContent(name);
   if (inNeedOfRepair.length) 
-    log(`[Data] Missing submission data for ${inNeedOfRepair.length} submissions...`);
+    console.log(`[Data] Missing submission data for ${inNeedOfRepair.length} submissions...`);
   if (needsDownload.length)
-    log(`[File] Missing submission content for ${needsDownload.length} submissions...`);
-  if (stop.now) return log(`[Data] User account export aborted`);
+    console.log(`[File] Missing submission content for ${needsDownload.length} submissions...`);
+  if (stop.now) return console.log(`[Data] User account export aborted`);
   await Promise.all([
     scrapeSubmissionInfo({ data: inNeedOfRepair, downloadComments: false }),
     startUserContentDownloads(needsDownload)
   ]);
-  if (stop.now) return log(`[Data] User account export aborted`);
+  if (stop.now) return console.log(`[Data] User account export aborted`);
   const allUserData = await db.getAllSubmissionsForUser(name);
-  if (!allUserData.length) return log(`[Data] No submissions to export: ${name}`);
-  log(`[Data] Exporting ${allUserData.length} submissions for account: ${name}`);
+  if (!allUserData.length) return console.log(`[Data] No submissions to export: ${name}`);
+  console.log(`[Data] Exporting ${allUserData.length} submissions for account: ${name}`);
   // Delete old exports!
   await fs.emptyDir(dirPath);
   // Loop through submissions and export them to Postybirb importer format
@@ -65,16 +65,16 @@ async function exportData(name) {
       await fs.copy(src, join(dest, archiveFileName));
     }
   }
-  log(`[Data] Export complete! Files can be found under "${dirPath}"`);
+  console.log(`[Data] Export complete! Files can be found under "${dirPath}"`);
 }
 let inProgress = false;
 export async function init(name) {
-  if (inProgress) return log('[Data] Already exporting data, please wait!');
+  if (inProgress) return console.log('[Data] Already exporting data, please wait!');
   inProgress = true;
   await exportData(name)
     .catch(e => {
       console.error(e);
-      log(`[Error] Data export failed, check logs`);
+      console.log(`[Error] Data export failed, check logs`);
     });
   inProgress = false;
 }

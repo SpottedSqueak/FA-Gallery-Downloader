@@ -54,6 +54,9 @@ export async function initGallery(browser) {
   page.on('console', msg => {
     const text = msg.text();
     if(/you are running/i.test(text)) return;
-    console.log(`[gallery] ${text}`);
+    if (msg.type() === 'error'){
+      let errorLoc = Object.values(msg.location()).toString().split('fa_gallery_downloader').pop();
+      console.error(`[Gallery] ${text}:\n.../fa_gallery_downloader${errorLoc}`);
+    } else console.log(`[Gallery] ${text}`)
   });
 }

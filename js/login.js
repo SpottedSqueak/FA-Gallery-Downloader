@@ -1,6 +1,6 @@
 import { FA_URL_BASE, FA_LOGIN, FA_SETTINGS } from "./constants.js";
 import { setOwnedAccount } from "./database-interface.js";
-import { getHTML, log, logLast } from "./utils.js";
+import { getHTML } from "./utils.js";
 
 export let faRequestHeaders = {};
 export let username = '';
@@ -16,9 +16,9 @@ function setRequestHeaders(faCookies) {
 }
 export async function checkForOldTheme(page) {
   const $ = await getHTML(FA_URL_BASE).catch(() => false);
-  if (!$) return log(`[Warn] FA might be down, please try again later`);
+  if (!$) return console.log(`[Warn] FA might be down, please try again later`);
   if (/classic/i.test($('body').data('static-path'))) {
-    log(`[Warn] Using incompatible old FA theme, prompting user to update settings`);
+    console.log(`[Warn] Using incompatible old FA theme, prompting user to update settings`);
     page = await browser.newPage();
     page.setDefaultNavigationTimeout(0);
     let resolver = () => {};
@@ -40,7 +40,7 @@ export async function checkForOldTheme(page) {
     });
     return checkForOldTheme(page);
   }
-  log(`[Data] FA Modern theme confirmed!`);
+  console.log(`[Data] FA Modern theme confirmed!`);
   page?.close();
   page = null;
 }
@@ -78,7 +78,7 @@ export async function checkIfLoggedIn(newBrowser) {
 async function logInUser() {
   page = page || await browser.newPage();
   page.setDefaultNavigationTimeout(0);
-  logLast('Not logged in! Requesting user to do so...');
+  console.log('Not logged in! Requesting user to do so...');
   await page.goto(FA_LOGIN);
   let resolver = () => {};
   page.once('close', () => {
@@ -104,11 +104,11 @@ export async function forceNewLogin(browser) {
 export async function handleLogin(newBrowser = browser) {
   browser = browser || newBrowser;
   // Get credentials
-  log('Checking logged in status...');
+  console.log('Checking logged in status...');
   if (!await checkIfLoggedIn()) 
     await logInUser().catch(() => page = null);
   if(username) {
-    log(`User logged-in as: ${username}`);
+    console.log(`User logged-in as: ${username}`);
     await setOwnedAccount(username);
   }
   page?.close();

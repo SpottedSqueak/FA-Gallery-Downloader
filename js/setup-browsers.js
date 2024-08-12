@@ -82,10 +82,10 @@ export async function setupBrowser() {
 
   page.on('close', async () => {
     stop.now = true;
-    console.log('Program closing...');
     await teardown();
     await db.close();
     browser?.close();
+    console.log('Program closed!');
   });
   // Display startup page
   return { browser, page };

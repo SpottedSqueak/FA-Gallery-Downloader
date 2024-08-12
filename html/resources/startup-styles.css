@@ -117,11 +117,12 @@ li > button {
   left: 213px;
 }
 .user-input-container {
-  grid-area: bl;
+  grid-area: span bl;
   padding-left: 8px;
 }
 .status-container {
-  grid-area: br;
+  grid-area: span br;
+  word-break: break-all;
 }
 .logged-in-status {
   display: block;
@@ -228,7 +229,7 @@ li > button {
 }
 #progress-bars {
   float: right;
-  margin: -12px 10% 4px 0;
+  margin: -12px 6% 4px 0;
   text-align: right;
 }
 .progress-desc {
@@ -241,7 +242,7 @@ li > button {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  width: 90%;
+  width: 94%;
   height: 425px;
   margin-top: -0.5em;
   border: 1px solid var(--border-color);
@@ -256,6 +257,11 @@ li > button {
   width: 100%;
   padding: 12px 8px;
   margin: 0;
+  word-wrap: break-word;
+  word-break: break-word;
+  font-family: monospace;
+  font-size: 0.83rem;
+  text-wrap: pretty;
 }
 #status p:nth-child(odd) {
   background: #d8d8d825;
@@ -270,7 +276,7 @@ label .warning {
 }
 
 .version {
-  width: 90%;
+  width: 94%;
   grid-area: brr;
   text-align: right;
   font-size: smaller;

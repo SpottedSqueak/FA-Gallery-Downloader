@@ -1,4 +1,4 @@
-import { init as initUtils, log, logLast, __dirname, getHTML, stop, sendStartupInfo, hideConsole, releaseCheck, isSiteActive, setActive, waitFor, setup } from './js/utils.js';
+import { init as initUtils, __dirname, getHTML, stop, sendStartupInfo, hideConsole, releaseCheck, isSiteActive, setActive, waitFor, setup } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
@@ -17,7 +17,7 @@ const startupLink = join('file://', __dirname, './html/startup.html');
 
 let inProgress = false;
 async function startDataScraping(uName = username, scrapeGallery = true, scrapeComments = true, scrapeFavorites) {
-  if (inProgress) return log('[Data] Program already running!');
+  if (inProgress) return console.log('[Data] Program already running!');
   if (uName) {
     inProgress = true;
     const allNames = uName.split(',').map(n => n.trim()).filter(n => !!n);
@@ -30,7 +30,7 @@ async function startDataScraping(uName = username, scrapeGallery = true, scrapeC
       // Check if valid username
       const $ = await getHTML(FA_USER_BASE + name).catch(() => false);
       if (!$ || /system.error/i.test($('title').text())) {
-        log(`[Warn] Invalid username: ${name}`);
+        console.log(`[Warn] Invalid username: ${name}`);
         continue;
       }
       // Scrape data from gallery pages
@@ -42,16 +42,16 @@ async function startDataScraping(uName = username, scrapeGallery = true, scrapeC
         await getSubmissionLinks({ url: FA_FAVORITES_URL, isFavorites: true, username: name });
       name = allNames.shift();
     }
-    if (stop.now) log('[Data] Process halted!');
+    if (stop.now) console.log('[Data] Process halted!');
   } else {
-    log('[Data] Continuing previous download...');
+    console.log('[Data] Continuing previous download...');
   }
   // Scrape data from collected submission pages
   Promise.all([
     scrapeSubmissionInfo({ downloadComments: scrapeComments }),
     initDownloads(),
   ]).then(() => {
-    if(!stop.now) log('Requested downloads complete! ♥');
+    if(!stop.now) console.log('Requested downloads complete! ♥');
   }).finally(() => {
     inProgress = false;
     setActive(false);
@@ -61,7 +61,7 @@ async function startDataScraping(uName = username, scrapeGallery = true, scrapeC
 async function checkDBRepair() {
   const needsRepair = await db.needsRepair();
   if (needsRepair.length)
-    log(`[Data] Database in need of repair:  ${needsRepair.length} submissions have incomplete data.`);
+    console.log(`[Data] Database in need of repair:  ${needsRepair.length} submissions have incomplete data.`);
 }
 
 async function init() {
@@ -91,33 +91,33 @@ async function init() {
       await waitFor(3000);
       await sendStartupInfo();
     } else if (choice === 'view-gallery') {
-      log(`[Data] Opening gallery viewer...`);
+      console.log(`[Data] Opening gallery viewer...`);
       initGallery(browser);
     } else if (choice === 'stop-all') {
       stop.now = true;
-      log('Stopping data scraping...');
+      console.log('Stopping data scraping...');
     } else if (choice === 'open') {
       if (data.url) open(data.url);
     } else if (choice === 'repair') {
       if (inProgress)
-        return log(`[Data] Please stop data scraping before restarting!`);
-      log('[Data] Checking database...');
+        return console.log(`[Data] Please stop data scraping before restarting!`);
+      console.log('[Data] Checking database...');
       inProgress = true;
       setActive(true);
       await db.deleteBlankSubmissionInfo();
       const inNeedOfRepair = await db.needsRepair();
       if (inNeedOfRepair.length) {
-        logLast('Database incomplete! Working on that now...');
+        console.log('Database incomplete! Working on that now...');
         await scrapeSubmissionInfo({ data: inNeedOfRepair, downloadComments: true })
           .finally(() => {
             inProgress = false;
             setActive(false);
           });
-        if (!stop.now) logLast(`Database repaired!`);
+        if (!stop.now) console.log(`Database repaired!`);
       } else {
         inProgress = false;
         setActive(false);
-        logLast(`[Data] Database OK!`);
+        console.log(`[Data] Database OK!`);
       }
     } else if (choice === 'export-data') {
       setActive(true);
@@ -145,7 +145,7 @@ async function init() {
       }
       // if exists, move
       if (exists) {
-        log('Data found, shutting down...');
+        console.log('Data found, shutting down...');
         await waitFor(2000);
         await page.close();
         await waitFor(2000);
@@ -161,7 +161,7 @@ async function init() {
         });
         console.log('Restarting...');
       } else {
-        log('[Warn] Old data not found! Is the program in the same folder as older version?');
+        console.log('[Warn] Old data not found! Is the program in the same folder as older version?');
       }
     }
   });
@@ -171,7 +171,7 @@ async function init() {
   await page.goto(startupLink);
   const isFAUp = await isSiteActive();
   if (isFAUp && await checkIfLoggedIn(browser)) await sendStartupInfo();
-  if (!isFAUp) log(`[Warn] FA appears to be down, try again later`);
+  if (!isFAUp) console.log(`[Warn] FA appears to be down, try again later`);
   // Repair DB if needed
   await checkDBRepair();
 }
