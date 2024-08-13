@@ -1,6 +1,7 @@
 import { FA_URL_BASE, FA_LOGIN, FA_SETTINGS } from "./constants.js";
 import { setOwnedAccount } from "./database-interface.js";
 import { getHTML } from "./utils.js";
+/** @import { CheerioAPI } from 'cheerio' */
 
 export let faRequestHeaders = {};
 export let username = '';
@@ -44,11 +45,16 @@ export async function checkForOldTheme(page) {
   page?.close();
   page = null;
 }
+/**
+ * 
+ * @param {CheerioAPI} $ 
+ * @returns 
+ */
 function setUsername($) {
   // Need to get username for loggedin user
   let href = $('#ddmenu a[href^="/user"]').first().attr('href');
-  href.replace('#', '');
   if (!href) return false;
+  href.replace('#', '');
   username = href.split('user/')[1].split('/')[0];
   return username;
 }

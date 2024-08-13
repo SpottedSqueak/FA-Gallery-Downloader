@@ -7,6 +7,7 @@ import fs from 'fs-extra';
 import * as db from './database-interface.js';
 import { exitCode, default as process, platform } from 'node:process';
 import { FA_URL_BASE, RELEASE_CHECK, LOG_DIR as logDir } from './constants.js';
+/** @import { CheerioAPI } from 'cheerio' */
 
 export const isWindows = platform === 'win32';
 export const isMac = platform === 'darwin';
@@ -137,7 +138,7 @@ logProgress.busy = (id) => {
 /**
  * Retrieves the HTML from the given URL and loads it into a Cheerio object.
  * @param {String} url 
- * @returns Loaded Cheerio Object
+ * @returns {CheerioAPI}
  */
 export function getHTML(url, sendHeaders = true) {
   const headers = sendHeaders ? faRequestHeaders : {};
