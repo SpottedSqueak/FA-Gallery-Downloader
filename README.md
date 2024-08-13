@@ -42,7 +42,7 @@ I hope it helps, it's always a good idea to not put all your eggs in one basket.
 
 ## Updating from v1.4 and below
 
-Extract the zip folder in the same location as the previous version's executable. Run the new program and click the "Import Data" button. Assuming you have the `fa_gallery_downloader` folder in the same folder, it will copy over all of that data and restart.
+Extract the zip folder in the same location as the previous version's executable. Run the new program and if you're missing any data (logged in accounts, gallery data, etc.) click the "Import Data" button. Assuming you have the `fa_gallery_downloader` folder in the same folder, it will copy over all of that data and restart.
 
 ## #DONE
 
