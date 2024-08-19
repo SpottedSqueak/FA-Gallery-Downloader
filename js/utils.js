@@ -10,10 +10,7 @@ import { FA_URL_BASE, RELEASE_CHECK, LOG_DIR as logDir } from './constants.js';
 /** @import { CheerioAPI } from 'cheerio' */
 
 export const isWindows = platform === 'win32';
-export const isMac = platform === 'darwin';
 const maxRetries = 5;
-
-export let hideConsole = () => {};
 
 export const stop = {
   should: false,
@@ -203,8 +200,8 @@ export async function setActive(val = true) {
 export async function init(newPage) {
   page = newPage;
   if (isWindows) {
-    hideConsole = await import('node-hide-console-window')
-      .then((hc) => hc.hideConsole)
+    await import('node-hide-console-window')
+      .then((hc) => { hc.hideConsole(); })
       .catch(() => () => {});
   }
 }

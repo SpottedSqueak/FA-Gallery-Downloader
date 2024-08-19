@@ -222,6 +222,15 @@ li > button {
   display: inline-block;
   min-width: 25%;
 }
+.export-info {
+  cursor: pointer;
+  margin: 4px 0 0 27%;
+  font-size: 0.8em;
+}
+
+.export-info input {
+  vertical-align: middle;
+}
 /** Status styles */
 .status-container {
   position: relative;

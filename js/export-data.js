@@ -10,17 +10,17 @@ const dlOptions = {
   mode: fs.constants.S_IRWXO
 };
 
-function constructJSON(d) {
+function constructJSON(d, includeDate = true) {
   return JSON.stringify({
     type: (/(png|jpg|gif|webp|jpeg)$/i.test(d.content_name)) ? 'image':'other',
     title: d.title || '',
-    date: new Intl.DateTimeFormat('en').format(new Date(d.date_uploaded)),
+    date: includeDate ? new Intl.DateTimeFormat('en').format(new Date(d.date_uploaded)): '',
     description: d.desc || '',
     tags: d.tags?.split(',') || [],
     rating: d.rating || 'General',
   });
 }
-async function exportData(name) {
+async function exportData(name, includeDate) {
   name = name.toLowerCase();
   const dirPath = join(EXPORT_DIR, name);
   const inNeedOfRepair = await db.needsRepair(name);
@@ -57,7 +57,7 @@ async function exportData(name) {
     src = join(DOWNLOAD_DIR, name, data.content_name);
     dest = join(dirPath, `${folderIndex}`, (data.is_scrap) ? 'scraps':'gallery');
     await fs.copy(src, join(dest, archiveFileName));
-    await fs.writeFile(join(dest, jsonFileName), constructJSON(data));
+    await fs.writeFile(join(dest, jsonFileName), constructJSON(data, includeDate));
     if (data.is_thumbnail_saved) {
       archiveFileName = archiveFileName.split('f.')[0] + 't.' + data.thumbnail_name.split('.').pop();
       src = join(DOWNLOAD_DIR, name, 'thumbnail', data.thumbnail_name);
@@ -68,10 +68,10 @@ async function exportData(name) {
   console.log(`[Data] Export complete! Files can be found under "${dirPath}"`);
 }
 let inProgress = false;
-export async function init(name) {
+export async function init(name, includeDate) {
   if (inProgress) return console.log('[Data] Already exporting data, please wait!');
   inProgress = true;
-  await exportData(name)
+  await exportData(name, includeDate)
     .catch(e => {
       console.error(e);
       console.log(`[Error] Data export failed, check logs`);

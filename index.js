@@ -1,4 +1,4 @@
-import { init as initUtils, __dirname, getHTML, stop, sendStartupInfo, hideConsole, releaseCheck, isSiteActive, setActive, waitFor, setup } from './js/utils.js';
+import { init as initUtils, __dirname, getHTML, stop, sendStartupInfo, releaseCheck, isSiteActive, setActive, waitFor, setup } from './js/utils.js';
 import * as db from './js/database-interface.js';
 import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
@@ -72,8 +72,6 @@ async function init() {
   const { page, browser } = await setupBrowser();
   // Setup user logging
   await initUtils(page);
-  // Hide console on Windows
-  hideConsole();
   // Wait for path decision
   await page.exposeFunction('userPath', async (data) => {
     const { choice } = data;
@@ -121,7 +119,7 @@ async function init() {
       }
     } else if (choice === 'export-data') {
       setActive(true);
-      await exportData(data.name);
+      await exportData(data.name, data.includeDate);
       setActive(false);
     } else if (choice === 'release-check') {
       sendStartupInfo(await releaseCheck());

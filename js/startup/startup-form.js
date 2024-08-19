@@ -38,8 +38,13 @@ export default {
       <div class="tab-content-container active">
         <p>Login to an account to see it listed here!</p>
         <ul>
-          <template v-for="name in accounts">
-            <li><span>{{name}}</span> <button @click.prevent="exportData(name)" alt="Export to Postybirb" title="Export to Postybirb">Export: Postybirb</button><button @click.prevent="deleteAccount(name)" alt="Delete account name" title="Delete account name">❌</button></li>
+          <template v-for="(name, i) in accounts">
+            <li>
+              <span>{{name}}</span>
+              <button @click.prevent="exportData(name, i)" alt="Export to Postybirb" title="Export to Postybirb">Export: Postybirb</button>
+              <button @click.prevent="deleteAccount(name)" alt="Delete account name" title="Delete account name">❌</button>
+              <div class="export-info"><input :id="'export-date_' + i" :ref="'export-date_' + i"type="checkbox" checked /><label :for="'export-date_' + i" >Include original post dates for submissions</label></div>
+            </li>
           </template>
         </ul>
       </div>
@@ -110,8 +115,9 @@ export default {
       const { name, scrapeGallery, scrapeComments, scrapeFavorites } = this;
       this.$emit('sendData',  { name, scrapeGallery, scrapeComments, scrapeFavorites });
     },
-    exportData(name) {
-      this.$emit('sendEvent', { choice: 'export-data', name });
+    exportData(name, i) {
+      const includeDate = this.$refs['export-date_' + i][0].checked;
+      this.$emit('sendEvent', { choice: 'export-data', name, includeDate });
     },
     deleteAccount(name) {
       if (window.confirm(`Remove account: [${name}]? \nNOTE: You'll need to login again to access it.`)) {

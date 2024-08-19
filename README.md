@@ -40,6 +40,26 @@ It supports resuming, as it can take upwards of half an hour to fully download l
 
 I hope it helps, it's always a good idea to not put all your eggs in one basket.
 
+## Exporting to Postybirb
+
+First off, you'll need to log in to an FA account to be able to export it! Once you do, you can simply click the `Export` button next to the username on the startup menu, and all currently downloaded/saved submissions will be exported to a folder with the following structure, where each folder represents 50 submissions:
+```
+.
+└── fa_gallery_downloader/
+    └── exports/
+        └── [account name]/
+            ├── 0
+            ├── 1
+            ├── 2
+            ├── 3
+            ├── 4
+            └── (etc...)
+```
+You'll need to import *each numbered directory* into Postybirb; Postybirb's directory importer had issues with handling more than 50 submissions at a time, hence this system.
+
+***NOTE:*** If you do not want to include the **"originally posted on"** date in the imported description in Postybirb, make sure to uncheck that option below the `Export` button.
+
+
 ## Updating from v1.4 and below
 
 Extract the zip folder in the same location as the previous version's executable. Run the new program and if you're missing any data (logged in accounts, gallery data, etc.) click the "Import Data" button. Assuming you have the `fa_gallery_downloader` folder in the same folder, it will copy over all of that data and restart.
