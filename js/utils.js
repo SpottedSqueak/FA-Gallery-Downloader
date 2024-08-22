@@ -180,8 +180,12 @@ export async function urlExists(url, sendHeaders = true) {
   };
   return got(url, headers).then(() => true).catch(() => false);
 }
+
 export async function isSiteActive() {
-  return urlExists(FA_URL_BASE);
+  const isSiteUp = urlExists(FA_URL_BASE);
+  const title = await getHTML(FA_URL_BASE).then($ => $('title').text()).catch(() => '');
+  const isMaintenance = !title || /fa.is.temporarily.offline/i.test(title);
+  return isSiteUp && !isMaintenance;
 }
 export async function sendStartupInfo(data = {}) {
   data.username = data.username || username;

@@ -1,6 +1,6 @@
 import { init as initUtils, __dirname, getHTML, stop, sendStartupInfo, releaseCheck, isSiteActive, setActive, waitFor, setup } from './js/utils.js';
 import * as db from './js/database-interface.js';
-import { FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
+import { FA_DOWN, FA_URL_BASE, FA_USER_BASE } from './js/constants.js';
 import { checkIfLoggedIn, handleLogin, forceNewLogin, username, checkForOldTheme } from './js/login.js';
 import { getSubmissionLinks, scrapeSubmissionInfo } from './js/scrape-data.js';
 import { initDownloads } from './js/download-content.js';
@@ -77,11 +77,13 @@ async function init() {
     const { choice } = data;
     stop.reset();
     if (choice === 'login') {
+      if (!await isSiteActive()) return console.log(FA_DOWN);
       if (!await checkIfLoggedIn(browser)) await handleLogin();
       else await forceNewLogin(browser);
       await checkForOldTheme();
       await sendStartupInfo({ queryName: username});
     } else if (choice === 'start-download') {
+      if (!await isSiteActive()) return console.log(FA_DOWN);
       if (!await checkIfLoggedIn(browser)) await handleLogin();
       await checkForOldTheme();
       const { name, scrapeGallery, scrapeComments, scrapeFavorites } = data;
@@ -169,7 +171,7 @@ async function init() {
   await page.goto(startupLink);
   const isFAUp = await isSiteActive();
   if (isFAUp && await checkIfLoggedIn(browser)) await sendStartupInfo();
-  if (!isFAUp) console.log(`[Warn] FA appears to be down, try again later`);
+  if (!isFAUp) console.log(FA_DOWN);
   // Repair DB if needed
   await checkDBRepair();
 }
