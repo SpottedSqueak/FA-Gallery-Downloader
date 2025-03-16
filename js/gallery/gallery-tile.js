@@ -38,7 +38,7 @@ export default {
   },
   computed: {
     cleanAccountName() {
-      return this.account_name.replace(/\.$/, '._');
+      return this.account_name.replace(/\.$/, '._').replace(/\'s$/, '');
     },
     isImg() {
       return (

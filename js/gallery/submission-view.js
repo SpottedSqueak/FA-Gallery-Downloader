@@ -150,7 +150,7 @@ export default {
         !(this.isUnknown && this.isMissing);
     },
     cleanAccountName() {
-      return this.submission.account_name.replace(/\.$/, '._');
+      return this.submission.account_name.replace(/\.$/, '._').replace(/\'s$/, '');
     },
     computedContentPath() {
       return `${this.contentPath}\\${this.cleanAccountName}\\${this.submission.content_name}`;

@@ -145,7 +145,7 @@ export async function fixInvalidUsernames() {
     // If ends with a period...
     if (/\.$/i.test(account_name)) {
       // Rename associated folder
-      const newName = account_name.replace(/\.$/, '._');
+      const newName = account_name.replace(/\.$/, '._').replace(/\'s$/, '');
       const oldPath = join(downloadDir, account_name);
       const newPath = join(downloadDir, newName);
       if (fs.existsSync(oldPath)) {
@@ -174,7 +174,7 @@ export async function deleteInvalidFiles() {
  */
 export async function downloadSpecificContent({ content_url, content_name, account_name }) {
   if (stop.now) return;
-  const downloadLocation = join(downloadDir, account_name.replace(/\.$/, '._'));
+  const downloadLocation = join(downloadDir, account_name.replace(/\.$/, '._').replace(/\'s$/, ''));
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setContentSaved(content_url))
     .catch((e) => {
@@ -204,7 +204,7 @@ export async function downloadThumbnail({ thumbnail_url, url:contentUrl, account
   }
   if (!content_url) return;
   const content_name = content_url.split('/').pop();
-  const downloadLocation = join(downloadDir, account_name.replace(/\.$/, '._'), 'thumbnail');
+  const downloadLocation = join(downloadDir, account_name.replace(/\.$/, '._').replace(/\'s$/, ''), 'thumbnail');
   return downloadSetup({ content_url, content_name, downloadLocation })
     .then(() => db.setThumbnailSaved(contentUrl, content_url, content_name))
     .catch((e) => {
